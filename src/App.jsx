@@ -271,6 +271,31 @@ export default function App() {
     return () => unsubscribeDoc();
   }, [cloudUser]);
 
+  // Auto push local data to Cloud when user logs in so mobile can immediately access it
+  useEffect(() => {
+    if (!cloudUser) return;
+    
+    const autoSyncToCloud = async () => {
+      try {
+        const hasLocalData = incomes.length > 0 || students.length > 0 || withdrawals.length > 0;
+        if (hasLocalData) {
+          await syncUserDataToCloud(cloudUser.uid, {
+            incomes,
+            jobs,
+            students,
+            withdrawals,
+            monthlyGoal,
+            currency: currency.code
+          });
+        }
+      } catch (err) {
+        console.warn('Auto cloud sync on login:', err);
+      }
+    };
+
+    autoSyncToCloud();
+  }, [cloudUser]);
+
   // Sync to Cloud helper
   const handleSyncToCloud = async () => {
     if (!cloudUser) {
@@ -901,7 +926,46 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         incomes={incomes}
-        onImportData={setIncomes}
+        students={students}
+        withdrawals={withdrawals}
+        jobs={jobs}
+        monthlyGoal={monthlyGoal}
+        onImportData={(data) => {
+          if (Array.isArray(data)) {
+            setIncomes(data);
+            localStorage.setItem('monthly_income_data', JSON.stringify(data));
+            if (cloudUser) syncUserDataToCloud(cloudUser.uid, { incomes: data }).catch(() => {});
+          } else if (data && typeof data === 'object') {
+            if (Array.isArray(data.incomes)) {
+              setIncomes(data.incomes);
+              localStorage.setItem('monthly_income_data', JSON.stringify(data.incomes));
+            }
+            if (Array.isArray(data.students)) {
+              setStudents(data.students);
+              localStorage.setItem('monthly_income_students', JSON.stringify(data.students));
+            }
+            if (Array.isArray(data.withdrawals)) {
+              setWithdrawals(data.withdrawals);
+              localStorage.setItem('monthly_income_withdrawals', JSON.stringify(data.withdrawals));
+            }
+            if (Array.isArray(data.jobs) && data.jobs.length > 0) {
+              setJobs(data.jobs);
+              localStorage.setItem('monthly_income_jobs', JSON.stringify(data.jobs));
+            }
+            if (data.monthlyGoal) {
+              setMonthlyGoal(data.monthlyGoal);
+            }
+            if (cloudUser) {
+              syncUserDataToCloud(cloudUser.uid, {
+                incomes: data.incomes || [],
+                students: data.students || [],
+                withdrawals: data.withdrawals || [],
+                jobs: data.jobs || jobs,
+                monthlyGoal: data.monthlyGoal || monthlyGoal
+              }).catch(() => {});
+            }
+          }
+        }}
         onResetToSample={() => {
           setIncomes([]);
           setStudents([]);

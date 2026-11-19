@@ -6,7 +6,11 @@ import ModalWrapper from './ModalWrapper';
 export default function ExportModal({
   isOpen,
   onClose,
-  incomes,
+  incomes = [],
+  students = [],
+  withdrawals = [],
+  jobs = [],
+  monthlyGoal = 35000,
   onImportData,
   onResetToSample,
   currency,
@@ -50,21 +54,30 @@ export default function ExportModal({
     }
   };
 
-  // Export to JSON
+  // Export Complete Backup to JSON
   const handleExportJSON = () => {
     try {
-      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(incomes, null, 2));
+      const backupData = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        incomes,
+        students,
+        withdrawals,
+        jobs,
+        monthlyGoal
+      };
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupData, null, 2));
       const link = document.createElement('a');
       link.href = dataStr;
-      link.download = `monthly-income-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `monthly-income-full-backup-${new Date().toISOString().split('T')[0]}.json`;
       link.click();
-      showToast('تم تصدير النسخة الاحتياطية بنجاح!', 'success');
+      showToast('تم تصدير النسخة الاحتياطية الكاملة (السجلات، الطلاب، المسحوبات) بنجاح!', 'success');
     } catch {
       showToast('تعذر تصدير النسخة الاحتياطية', 'error');
     }
   };
 
-  // Import JSON
+  // Import JSON Backup
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -73,12 +86,12 @@ export default function ExportModal({
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
-        if (Array.isArray(parsed)) {
+        if (parsed) {
           onImportData(parsed);
           showToast('تم استيراد البيانات بنجاح واسترجاع السجلات!', 'success');
           onClose();
         } else {
-          showToast('ملف غير صالح: يجب أن يحتوي الملف على مصفوفة من السجلات.', 'error');
+          showToast('ملف غير صالح، يرجى اختيار ملف نسخة احتياطية صحيح.', 'error');
         }
       } catch (err) {
         showToast('حدث خطأ أثناء قراءة الملف، تأكد من صحة صيغة JSON.', 'error');
