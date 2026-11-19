@@ -43,7 +43,9 @@ export default function IncomeTable({
         const matchesJob =
           selectedJobFilter === 'all' ||
           item.jobId === selectedJobFilter ||
-          (!item.jobId && selectedJobObj && item.category === selectedJobObj.category);
+          (!item.jobId && selectedJobObj && item.category === selectedJobObj.category) ||
+          (selectedJobFilter === 'job-center' && (item.title?.includes('سنتر') || item.client?.includes('سنتر') || item.category === 'center')) ||
+          (selectedJobFilter === 'job-private' && (item.title?.includes('فريلانس') || item.title?.includes('خاص') || item.category === 'private'));
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
 
         return matchesSearch && matchesJob && matchesStatus;
@@ -185,7 +187,11 @@ export default function IncomeTable({
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
               {filteredIncomes.map((item) => {
-                const matchedJob = jobs.find((j) => j.id === item.jobId) || jobs.find((j) => j.category === item.category);
+                const matchedJob =
+                  jobs.find((j) => j.id === item.jobId) ||
+                  jobs.find((j) => j.category === item.category) ||
+                  (item.title?.includes('سنتر') || item.client?.includes('سنتر') ? jobs.find((j) => j.id === 'job-center') : null) ||
+                  (item.title?.includes('فريلانس') || item.title?.includes('خاص') ? jobs.find((j) => j.id === 'job-private') : null);
                 const categoryMeta = CATEGORIES.find((c) => c.id === item.category) || {
                   name: item.category,
                   color: matchedJob?.color || '#10b981',

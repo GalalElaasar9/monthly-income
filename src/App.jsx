@@ -36,6 +36,20 @@ import {
   ARABIC_MONTHS
 } from './constants';
 
+// Helper to merge local & remote records without losing local unsynced data
+const mergeRecordsById = (localArr = [], remoteArr = []) => {
+  const map = new Map();
+  // 1. Remote items first
+  (remoteArr || []).forEach((item) => {
+    if (item && item.id) map.set(item.id, item);
+  });
+  // 2. Local items take priority so newly added items are never erased
+  (localArr || []).forEach((item) => {
+    if (item && item.id) map.set(item.id, item);
+  });
+  return Array.from(map.values());
+};
+
 export default function App() {
   // 1. Toast Notification State
   const [toast, setToast] = useState(null);
@@ -223,16 +237,32 @@ export default function App() {
     const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
       if (cloudData) {
         if (Array.isArray(cloudData.incomes)) {
-          setIncomes((prev) => (cloudData.incomes.length === 0 && prev.length > 0 ? prev : cloudData.incomes));
+          setIncomes((prev) => {
+            const merged = mergeRecordsById(prev, cloudData.incomes);
+            localStorage.setItem('monthly_income_data', JSON.stringify(merged));
+            return merged;
+          });
         }
-        if (Array.isArray(cloudData.jobs)) {
-          setJobs((prev) => (cloudData.jobs.length === 0 && prev.length > 0 ? prev : cloudData.jobs));
+        if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
+          setJobs((prev) => {
+            const merged = mergeRecordsById(cloudData.jobs, prev);
+            localStorage.setItem('monthly_income_jobs', JSON.stringify(merged));
+            return merged;
+          });
         }
         if (Array.isArray(cloudData.students)) {
-          setStudents((prev) => (cloudData.students.length === 0 && prev.length > 0 ? prev : cloudData.students));
+          setStudents((prev) => {
+            const merged = mergeRecordsById(prev, cloudData.students);
+            localStorage.setItem('monthly_income_students', JSON.stringify(merged));
+            return merged;
+          });
         }
         if (Array.isArray(cloudData.withdrawals)) {
-          setWithdrawals((prev) => (cloudData.withdrawals.length === 0 && prev.length > 0 ? prev : cloudData.withdrawals));
+          setWithdrawals((prev) => {
+            const merged = mergeRecordsById(prev, cloudData.withdrawals);
+            localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
+            return merged;
+          });
         }
         if (cloudData.monthlyGoal) setMonthlyGoal(cloudData.monthlyGoal);
       }
@@ -426,14 +456,25 @@ export default function App() {
 
     setIncomes((prev) => {
       const existingIndex = prev.findIndex((i) => i.id === incomeData.id);
+      let updated;
       if (existingIndex >= 0) {
-        const copy = [...prev];
-        copy[existingIndex] = incomeData;
-        return copy;
+        updated = [...prev];
+        updated[existingIndex] = incomeData;
       } else {
-        return [incomeData, ...prev];
+        updated = [incomeData, ...prev];
       }
+      try {
+        localStorage.setItem('monthly_income_data', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
+
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, {
+        incomes: [incomeData, ...incomes.filter((i) => i.id !== incomeData.id)]
+      }).catch(() => {});
+    }
+
     showToast(editingIncome ? 'تم حفظ التعديلات بنجاح' : 'تم تسجيل الدخل الجديد بنجاح!', 'success');
   };
 
@@ -502,20 +543,36 @@ export default function App() {
       notes: `تم السداد لمرحلة ${student.grade}`
     };
 
-    setIncomes((prev) => [newIncome, ...prev]);
+    setIncomes((prev) => {
+      const updated = [newIncome, ...prev];
+      try {
+        localStorage.setItem('monthly_income_data', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, {
+        incomes: [newIncome, ...incomes]
+      }).catch(() => {});
+    }
   };
 
   // Job Operations
   const handleSaveJob = (jobData) => {
     setJobs((prev) => {
       const index = prev.findIndex((j) => j.id === jobData.id);
+      let updated;
       if (index >= 0) {
-        const copy = [...prev];
-        copy[index] = jobData;
-        return copy;
+        updated = [...prev];
+        updated[index] = jobData;
       } else {
-        return [...prev, jobData];
+        updated = [...prev, jobData];
       }
+      try {
+        localStorage.setItem('monthly_income_jobs', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
   };
 
@@ -531,13 +588,17 @@ export default function App() {
 
     setWithdrawals((prev) => {
       const existingIndex = prev.findIndex((w) => w.id === withdrawalData.id);
+      let updated;
       if (existingIndex >= 0) {
-        const copy = [...prev];
-        copy[existingIndex] = withdrawalData;
-        return copy;
+        updated = [...prev];
+        updated[existingIndex] = withdrawalData;
       } else {
-        return [withdrawalData, ...prev];
+        updated = [withdrawalData, ...prev];
       }
+      try {
+        localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
     });
     setIsWithdrawalModalOpen(false);
     showToast(

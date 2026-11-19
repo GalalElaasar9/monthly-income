@@ -25,9 +25,15 @@ export default function JobsSummaryCards({
 }) {
   // Compute total for each job in the selected month
   const jobStats = jobs.map((job) => {
-    const jobIncomes = currentMonthIncomes.filter(
-      (inc) => inc.jobId === job.id || (!inc.jobId && inc.category === job.category)
-    );
+    const jobIncomes = currentMonthIncomes.filter((inc) => {
+      if (inc.jobId && inc.jobId === job.id) return true;
+      if (inc.category && inc.category === job.category) return true;
+      if (job.id === 'job-center' && (inc.title?.includes('سنتر') || inc.client?.includes('سنتر') || inc.category === 'center')) return true;
+      if (job.id === 'job-private' && (inc.title?.includes('فريلانس') || inc.title?.includes('خاص') || inc.category === 'private')) return true;
+      if (job.id === 'job-company' && (inc.title?.includes('شركة') || inc.category === 'salary')) return true;
+      if (job.id === 'job-online' && (inc.studentId || inc.studentName || inc.category === 'students')) return true;
+      return false;
+    });
     const received = jobIncomes
       .filter((inc) => inc.status === 'received')
       .reduce((sum, inc) => sum + inc.amount, 0);
