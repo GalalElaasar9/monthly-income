@@ -85,10 +85,7 @@ export const WITHDRAWAL_REASONS = [
 
 export const GRADE_OPTIONS = [
   'أولى ثانوي',
-  'تانية ثانوي',
-  'ثانوية عامة (3 ثانوي)',
-  'مرحلة إعدادية',
-  'أخرى'
+  'تانية ثانوي'
 ];
 
 // Handles standard, Eastern Arabic (١٢٣), and comma-formatted numbers
