@@ -21,7 +21,7 @@ import {
 // Hardcoded default config from the user's project with fallback to env
 export const defaultFirebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDU1Dlum_Joc9trq8u1z_fpTJEZA3z6g9o",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "my-income-82ba6.web.app",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "my-income-82ba6.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "my-income-82ba6",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "my-income-82ba6.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "739411704729",

@@ -130,6 +130,8 @@ export default function AuthScreen({
       console.error(err);
       if (err.code === 'auth/popup-closed-by-user') {
         showToast('تم إلغاء نافذة تسجيل الدخول', 'info');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        showToast('هذا الدومين غير مصرح له في Firebase. يرجى إضافته إلى Authorized Domains في Firebase Console.', 'error');
       } else if (err.code === 'auth/network-request-failed' || err.message?.includes('network') || err.message?.includes('reset')) {
         showToast('تعذر الاتصال بـ Google عبر الشبكة المحلية. يرجى استخدام البريد الإلكتروني وكلمة المرور أدناه.', 'error');
       } else {
