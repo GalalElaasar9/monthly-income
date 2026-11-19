@@ -88,6 +88,11 @@ export const GRADE_OPTIONS = [
   'تانية ثانوي'
 ];
 
+export const GRADE_DEFAULT_FEES = {
+  'أولى ثانوي': 250,
+  'تانية ثانوي': 300
+};
+
 // Handles standard, Eastern Arabic (١٢٣), and comma-formatted numbers
 export const parseNumberInput = (value) => {
   if (typeof value === 'number') return isNaN(value) ? 0 : value;

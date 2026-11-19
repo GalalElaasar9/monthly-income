@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save, GraduationCap, DollarSign, Phone, FileText, Check } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
-import { parseNumberInput } from '../constants';
+import { parseNumberInput, GRADE_DEFAULT_FEES } from '../constants';
 
 export default function StudentModal({
   isOpen,
@@ -23,22 +23,32 @@ export default function StudentModal({
       setName(editingStudent.name || '');
       // Normalize grade to either اولى ثانوي or تانية ثانوي
       const g = (editingStudent.grade || '').toLowerCase();
+      let normalizedGrade = 'أولى ثانوي';
       if (g.includes('تانية') || g.includes('ثانية') || g.includes('2')) {
-        setGrade('تانية ثانوي');
-      } else {
-        setGrade('أولى ثانوي');
+        normalizedGrade = 'تانية ثانوي';
       }
-      setMonthlyFee(editingStudent.monthlyFee ? String(editingStudent.monthlyFee) : '');
+      setGrade(normalizedGrade);
+      setMonthlyFee(editingStudent.monthlyFee ? String(editingStudent.monthlyFee) : String(GRADE_DEFAULT_FEES[normalizedGrade] || 250));
       setPhone(editingStudent.phone || '');
       setNotes(editingStudent.notes || '');
     } else {
       setName('');
       setGrade('أولى ثانوي');
-      setMonthlyFee('500');
+      setMonthlyFee(String(GRADE_DEFAULT_FEES['أولى ثانوي'] || 250));
       setPhone('');
       setNotes('');
     }
   }, [editingStudent, isOpen]);
+
+  const handleGradeSelect = (newGrade) => {
+    setGrade(newGrade);
+    const newDefault = String(GRADE_DEFAULT_FEES[newGrade] || 250);
+    const prevDefault = String(GRADE_DEFAULT_FEES[grade] || 250);
+    // If adding new student or fee matches a preset/default or empty, auto-switch to new grade's fee
+    if (!editingStudent || !monthlyFee || monthlyFee === prevDefault || monthlyFee === '250' || monthlyFee === '300' || monthlyFee === '500') {
+      setMonthlyFee(newDefault);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -118,7 +128,7 @@ export default function StudentModal({
             {/* أولى ثانوي */}
             <button
               type="button"
-              onClick={() => setGrade('أولى ثانوي')}
+              onClick={() => handleGradeSelect('أولى ثانوي')}
               className={`p-3 rounded-2xl border text-right transition-all duration-200 active:scale-95 flex items-center justify-between ${
                 grade === 'أولى ثانوي'
                   ? 'bg-purple-50 dark:bg-purple-950/50 border-purple-500 text-purple-900 dark:text-purple-200 ring-2 ring-purple-500/30 shadow-sm'
@@ -137,7 +147,9 @@ export default function StudentModal({
                 </div>
                 <div>
                   <span className="font-bold text-xs block">أولى ثانوي</span>
-                  <span className="text-[10px] text-slate-400 block font-normal">الصف الأول</span>
+                  <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block">
+                    250 {currency.symbol}
+                  </span>
                 </div>
               </div>
 
@@ -155,7 +167,7 @@ export default function StudentModal({
             {/* تانية ثانوي */}
             <button
               type="button"
-              onClick={() => setGrade('تانية ثانوي')}
+              onClick={() => handleGradeSelect('تانية ثانوي')}
               className={`p-3 rounded-2xl border text-right transition-all duration-200 active:scale-95 flex items-center justify-between ${
                 grade === 'تانية ثانوي'
                   ? 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500 text-indigo-900 dark:text-indigo-200 ring-2 ring-indigo-500/30 shadow-sm'
@@ -174,7 +186,9 @@ export default function StudentModal({
                 </div>
                 <div>
                   <span className="font-bold text-xs block">تانية ثانوي</span>
-                  <span className="text-[10px] text-slate-400 block font-normal">الصف الثاني</span>
+                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold block">
+                    300 {currency.symbol}
+                  </span>
                 </div>
               </div>
 
@@ -193,20 +207,54 @@ export default function StudentModal({
 
         {/* Monthly Fee */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            قيمة الاشتراك الشهري ({currency.symbol}) <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              قيمة الاشتراك الشهري ({currency.symbol}) <span className="text-rose-500">*</span>
+            </label>
+            <span className="text-[11px] text-slate-400">
+              قابل للتعديل لأي مبلغ
+            </span>
+          </div>
           <div className="relative">
             <DollarSign className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               inputMode="numeric"
               required
-              placeholder="مثال: 500"
+              placeholder={grade === 'أولى ثانوي' ? '250' : '300'}
               value={monthlyFee}
               onChange={(e) => setMonthlyFee(e.target.value)}
               className="w-full pl-3 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-purple-500 transition"
             />
+          </div>
+
+          {/* Quick preset chips */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span className="text-[10px] text-slate-400 font-medium ml-1">تحديد سريع:</span>
+            <button
+              type="button"
+              onClick={() => setMonthlyFee('250')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${
+                monthlyFee === '250'
+                  ? 'bg-purple-600 text-white shadow-xs ring-1 ring-purple-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-950/40'
+              }`}
+            >
+              <span>250 {currency.symbol}</span>
+              <span className="text-[10px] opacity-80 font-normal">(أولى ثانوي)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMonthlyFee('300')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${
+                monthlyFee === '300'
+                  ? 'bg-indigo-600 text-white shadow-xs ring-1 ring-indigo-600'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
+              }`}
+            >
+              <span>300 {currency.symbol}</span>
+              <span className="text-[10px] opacity-80 font-normal">(تانية ثانوي)</span>
+            </button>
           </div>
         </div>
 
