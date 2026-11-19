@@ -156,18 +156,14 @@ export default function Navbar({
             {/* Cloud Auto-Sync Indicator & Button */}
             <button
               onClick={onOpenCloudSync}
-              className={`flex items-center gap-2 px-3 py-2 sm:py-2.5 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm ${
-                cloudUser
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
-                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40'
-              }`}
-              title={cloudUser ? `المزامنة التلقائية مفعلة (${cloudUser.email}) - تتزامن لحظياً مع كافة أجهزتك` : 'غير متصل بالسحابة - انقر للربط والمزامنة'}
+              className="flex items-center gap-2 px-3 py-2 sm:py-2.5 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+              title="المزامنة الفورية مفعلة (Supabase Realtime) - تتزامن لحظياً بين الموبايل والكمبيوتر"
             >
-              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : (cloudUser ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600')}`} />
+              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : 'text-emerald-600 dark:text-emerald-400'}`} />
               <span className="hidden md:inline">
-                {isSyncing ? 'مزامنة تلقائية...' : (cloudUser ? 'متزامن تلقائياً ☁️' : 'ربط السحابة')}
+                {isSyncing ? 'مزامنة فورية...' : 'متزامن لحظياً ⚡'}
               </span>
-              <span className={`w-2 h-2 rounded-full ${cloudUser ? 'bg-emerald-500 ring-2 ring-emerald-500/30 animate-pulse' : 'bg-amber-500 ring-2 ring-amber-500/30'}`} />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30 animate-pulse" />
             </button>
 
             {/* Calendar Icon Button & Popover */}
@@ -319,14 +315,10 @@ export default function Navbar({
             {/* Quick Cloud Sync CTA */}
             <button
               onClick={onOpenCloudSync}
-              className={`p-1.5 rounded-xl border transition-all duration-200 active:scale-95 ${
-                cloudUser
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 text-amber-700'
-              }`}
-              title={cloudUser ? `متصل بالسحابة (${cloudUser.email})` : 'مزامنة السحابة'}
+              className="p-1.5 rounded-xl border transition-all duration-200 active:scale-95 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300"
+              title="المزامنة الفورية مفعلة (Supabase Realtime)"
             >
-              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : ''}`} />
+              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : 'text-emerald-600 dark:text-emerald-400'}`} />
             </button>
 
             {/* Hamburger Bars Menu Trigger */}

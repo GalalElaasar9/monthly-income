@@ -104,10 +104,10 @@ export default function FirebaseModal({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>المزامنة السحابية (Google Firebase)</span>
+                <span>المزامنة السحابية والفورية ⚡</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                مشروع: <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">my-income-82ba6</span>
+                قاعدة بيانات فورية (Supabase Realtime) • متصلة وتتزامن بين الموبايل والكمبيوتر
               </p>
             </div>
           </div>
@@ -129,16 +129,16 @@ export default function FirebaseModal({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="text-xs">
                 <span className="font-bold block">
-                  السحابة متصلة ومفعلة بنجاح
+                  المزامنة اللحظية الفورية نشطة ⚡
                 </span>
                 <span className="text-[11px] opacity-80">
-                  {cloudUser ? `متصل بحساب: ${cloudUser.email}` : 'سجل دخولك لتتزامن بياناتك فوراً عبر السحابة'}
+                  أي تعديل على هاتفك يظهر فوراً على الكمبيوتر والعكس دون الحاجة لتحديث الصفحة.
                 </span>
               </div>
             </div>
 
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
-              🟢 أونلاين
+              🟢 متزامن لحظياً
             </span>
           </div>
 

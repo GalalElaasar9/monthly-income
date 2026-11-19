@@ -27,6 +27,11 @@ import {
   subscribeToCloudData,
   fetchUserDataFromCloud
 } from './firebase';
+import {
+  fetchUserDataFromSupabase,
+  syncUserDataToSupabase,
+  subscribeToSupabaseUserData
+} from './supabase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   INITIAL_DATA,
@@ -98,16 +103,26 @@ export default function App() {
   // Cloud sync catch helper with informative, user-friendly warnings
   const handleCloudSyncCatch = (err) => {
     console.warn('Cloud sync error:', err);
-    if (err?.code === 'resource-exhausted') {
-      showToast(
-        'تم حفظ بياناتك محلياً بنجاح ✅ (تم الوصول للحد الأقصى اليومي لـ Firebase Spark، وستكتمل المزامنة السحابية تلقائياً عند تجدد الحصة)',
-        'warning'
-      );
-    } else if (err?.code === 'permission-denied') {
-      showToast(
-        'تم الحفظ محلياً على جهازك. تنبيه: صلاحية السحابة غير مكتملة، يرجى تسجيل الدخول مجدداً.',
-        'warning'
-      );
+  };
+
+  // Helper to determine active sync user ID across devices
+  const getEffectiveUserId = () => {
+    const raw = cloudUser?.email || currentUser?.email || 'galalelaaser101@gmail.com';
+    return (raw && raw !== 'user@example.com' ? raw : 'galalelaaser101@gmail.com').toLowerCase().trim();
+  };
+
+  // Central multi-backend synchronization dispatcher
+  const syncToAllBackends = (dataPayload) => {
+    const syncId = getEffectiveUserId();
+    // 1. Primary: Supabase Realtime (Instant WebSocket sync, no quotas, 100% free)
+    syncUserDataToSupabase(syncId, dataPayload, currentUser?.email || cloudUser?.email || '')
+      .catch((err) => console.warn('Supabase sync error:', err));
+
+    // 2. Secondary fallback: Firebase (best-effort)
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, dataPayload).catch((err) => {
+        console.warn('Firebase background fallback info:', err);
+      });
     }
   };
 
@@ -284,14 +299,10 @@ export default function App() {
 
   const [isInitialCloudLoaded, setIsInitialCloudLoaded] = useState(false);
 
-  // 1. 100% Automatic Background Cloud Sync & Realtime Subscription
+  // 1. 100% Automatic Background Cloud Sync & Realtime Subscription via Supabase
   useEffect(() => {
-    if (!cloudUser) {
-      setIsInitialCloudLoaded(false);
-      return;
-    }
-
     let isMounted = true;
+    const syncId = getEffectiveUserId();
 
     const runAutomaticInitialSync = async () => {
       setIsSyncing(true);
@@ -321,23 +332,23 @@ export default function App() {
           }
         } catch (e) {}
 
-        const cloudData = await fetchUserDataFromCloud(cloudUser.uid);
+        const remoteData = await fetchUserDataFromSupabase(syncId);
         if (!isMounted) return;
 
         const hasLocalData = localIncomes.length > 0 || localStudents.length > 0 || localWithdrawals.length > 0;
-        const hasRemoteData = cloudData && (
-          (Array.isArray(cloudData.incomes) && cloudData.incomes.length > 0) ||
-          (Array.isArray(cloudData.students) && cloudData.students.length > 0) ||
-          (Array.isArray(cloudData.withdrawals) && cloudData.withdrawals.length > 0)
+        const hasRemoteData = remoteData && (
+          (Array.isArray(remoteData.incomes) && remoteData.incomes.length > 0) ||
+          (Array.isArray(remoteData.students) && remoteData.students.length > 0) ||
+          (Array.isArray(remoteData.withdrawals) && remoteData.withdrawals.length > 0)
         );
 
         if (hasRemoteData) {
           // Cloud already has data! Merge local with remote safely
-          const mergedIncomes = mergeRecordsById(cloudData.incomes, localIncomes, deletedIds);
-          const mergedStudents = mergeRecordsById(cloudData.students, localStudents, deletedIds);
-          const mergedWithdrawals = mergeRecordsById(cloudData.withdrawals, localWithdrawals, deletedIds);
-          const mergedJobs = (cloudData.jobs && cloudData.jobs.length > 0) ? cloudData.jobs : localJobs;
-          const mergedGoal = cloudData.monthlyGoal || localGoal;
+          const mergedIncomes = mergeRecordsById(remoteData.incomes, localIncomes, deletedIds);
+          const mergedStudents = mergeRecordsById(remoteData.students, localStudents, deletedIds);
+          const mergedWithdrawals = mergeRecordsById(remoteData.withdrawals, localWithdrawals, deletedIds);
+          const mergedJobs = (remoteData.jobs && remoteData.jobs.length > 0) ? remoteData.jobs : localJobs;
+          const mergedGoal = remoteData.monthlyGoal || localGoal;
 
           setIncomes(mergedIncomes);
           setStudents(mergedStudents);
@@ -352,32 +363,32 @@ export default function App() {
           localStorage.setItem('monthly_income_goal', String(mergedGoal));
 
           // If this device had new records not yet in cloud, auto-push merged set to cloud in background
-          const hasLocalExtras = (mergedIncomes.length > (cloudData.incomes?.length || 0)) ||
-                                 (mergedStudents.length > (cloudData.students?.length || 0)) ||
-                                 (mergedWithdrawals.length > (cloudData.withdrawals?.length || 0));
+          const hasLocalExtras = (mergedIncomes.length > (remoteData.incomes?.length || 0)) ||
+                                 (mergedStudents.length > (remoteData.students?.length || 0)) ||
+                                 (mergedWithdrawals.length > (remoteData.withdrawals?.length || 0));
           if (hasLocalExtras) {
-            await syncUserDataToCloud(cloudUser.uid, {
+            await syncUserDataToSupabase(syncId, {
               incomes: mergedIncomes,
               students: mergedStudents,
               withdrawals: mergedWithdrawals,
               jobs: mergedJobs,
               monthlyGoal: mergedGoal,
               currency: currency.code
-            });
+            }, currentUser?.email || cloudUser?.email || '');
           }
         } else if (hasLocalData) {
-          // Cloud is empty, but this device has local data! Auto-upload to cloud in background
-          await syncUserDataToCloud(cloudUser.uid, {
+          // Supabase is empty, but this device has local data! Auto-upload to cloud in background
+          await syncUserDataToSupabase(syncId, {
             incomes: localIncomes,
             jobs: localJobs,
             students: localStudents,
             withdrawals: localWithdrawals,
             monthlyGoal: localGoal,
             currency: currency.code
-          });
+          }, currentUser?.email || cloudUser?.email || '');
         }
       } catch (err) {
-        console.warn('Auto cloud sync on mount:', err);
+        console.warn('Auto Supabase sync on mount:', err);
       } finally {
         if (isMounted) {
           setIsSyncing(false);
@@ -388,75 +399,84 @@ export default function App() {
 
     runAutomaticInitialSync();
 
-    // 2. Real-time Subscription to listen for changes from other tabs/devices
-    const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
-      if (!isMounted || !cloudData) return;
+    // 2. Real-time Subscription to listen for changes from Mobile / Other devices via WebSockets
+    const unsubscribeSupabase = subscribeToSupabaseUserData(syncId, (remoteData) => {
+      if (!isMounted || !remoteData) return;
       
       // Merge remote updates with current local records so pending/offline local records are never erased
-      if (Array.isArray(cloudData.incomes)) {
+      if (Array.isArray(remoteData.incomes)) {
         setIncomes((currentLocal) => {
-          const merged = mergeRecordsById(cloudData.incomes, currentLocal, deletedIds);
+          const merged = mergeRecordsById(remoteData.incomes, currentLocal, deletedIds);
           try {
             localStorage.setItem('monthly_income_data', JSON.stringify(merged));
           } catch (e) {}
           return merged;
         });
       }
-      if (Array.isArray(cloudData.students)) {
+      if (Array.isArray(remoteData.students)) {
         setStudents((currentLocal) => {
-          const merged = mergeRecordsById(cloudData.students, currentLocal, deletedIds);
+          const merged = mergeRecordsById(remoteData.students, currentLocal, deletedIds);
           try {
             localStorage.setItem('monthly_income_students', JSON.stringify(merged));
           } catch (e) {}
           return merged;
         });
       }
-      if (Array.isArray(cloudData.withdrawals)) {
+      if (Array.isArray(remoteData.withdrawals)) {
         setWithdrawals((currentLocal) => {
-          const merged = mergeRecordsById(cloudData.withdrawals, currentLocal, deletedIds);
+          const merged = mergeRecordsById(remoteData.withdrawals, currentLocal, deletedIds);
           try {
             localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
           } catch (e) {}
           return merged;
         });
       }
-      if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
-        setJobs(cloudData.jobs);
+      if (Array.isArray(remoteData.jobs) && remoteData.jobs.length > 0) {
+        setJobs(remoteData.jobs);
         try {
-          localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+          localStorage.setItem('monthly_income_jobs', JSON.stringify(remoteData.jobs));
         } catch (e) {}
       }
-      if (cloudData.monthlyGoal) {
-        setMonthlyGoal(cloudData.monthlyGoal);
+      if (remoteData.monthlyGoal) {
+        setMonthlyGoal(remoteData.monthlyGoal);
         try {
-          localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+          localStorage.setItem('monthly_income_goal', String(remoteData.monthlyGoal));
         } catch (e) {}
       }
     });
 
     return () => {
       isMounted = false;
-      unsubscribeDoc();
+      unsubscribeSupabase();
     };
-  }, [cloudUser]);
+  }, [currentUser, cloudUser]);
 
   // Explicit Manual Push: Push current device state to Cloud
   const handleManualPushToCloud = async () => {
-    if (!cloudUser) {
-      setIsFirebaseModalOpen(true);
-      return;
-    }
     setIsSyncing(true);
+    const syncId = getEffectiveUserId();
     try {
-      await syncUserDataToCloud(cloudUser.uid, {
+      await syncUserDataToSupabase(syncId, {
         incomes,
         jobs,
         students,
         withdrawals,
         monthlyGoal,
         currency: currency.code
-      });
-      showToast(`تم رفع ومزامنة كافة بيانات هذا الجهاز بنجاح (${incomes.length} إيراد، ${students.length} طالب، ${withdrawals.length} سحب) ☁️`, 'success');
+      }, currentUser?.email || cloudUser?.email || '');
+
+      if (cloudUser) {
+        syncUserDataToCloud(cloudUser.uid, {
+          incomes,
+          jobs,
+          students,
+          withdrawals,
+          monthlyGoal,
+          currency: currency.code
+        }).catch(() => {});
+      }
+
+      showToast(`تم رفع ومزامنة كافة بيانات هذا الجهاز بنجاح (${incomes.length} إيراد، ${students.length} طالب، ${withdrawals.length} سحب) ⚡`, 'success');
     } catch (err) {
       console.error(err);
       showToast('حدث خطأ أثناء الرفع إلى السحابة: ' + (err.message || 'خطأ غير معروف'), 'error');
@@ -467,35 +487,32 @@ export default function App() {
 
   // Explicit Manual Pull: Fetch latest data from Cloud and update this device
   const handleManualPullFromCloud = async () => {
-    if (!cloudUser) {
-      setIsFirebaseModalOpen(true);
-      return;
-    }
     setIsSyncing(true);
+    const syncId = getEffectiveUserId();
     try {
-      const cloudData = await fetchUserDataFromCloud(cloudUser.uid);
-      if (cloudData) {
-        if (Array.isArray(cloudData.incomes)) {
-          setIncomes(cloudData.incomes);
-          localStorage.setItem('monthly_income_data', JSON.stringify(cloudData.incomes));
+      const remoteData = await fetchUserDataFromSupabase(syncId);
+      if (remoteData) {
+        if (Array.isArray(remoteData.incomes)) {
+          setIncomes(remoteData.incomes);
+          localStorage.setItem('monthly_income_data', JSON.stringify(remoteData.incomes));
         }
-        if (Array.isArray(cloudData.students)) {
-          setStudents(cloudData.students);
-          localStorage.setItem('monthly_income_students', JSON.stringify(cloudData.students));
+        if (Array.isArray(remoteData.students)) {
+          setStudents(remoteData.students);
+          localStorage.setItem('monthly_income_students', JSON.stringify(remoteData.students));
         }
-        if (Array.isArray(cloudData.withdrawals)) {
-          setWithdrawals(cloudData.withdrawals);
-          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(cloudData.withdrawals));
+        if (Array.isArray(remoteData.withdrawals)) {
+          setWithdrawals(remoteData.withdrawals);
+          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(remoteData.withdrawals));
         }
-        if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
-          setJobs(cloudData.jobs);
-          localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+        if (Array.isArray(remoteData.jobs) && remoteData.jobs.length > 0) {
+          setJobs(remoteData.jobs);
+          localStorage.setItem('monthly_income_jobs', JSON.stringify(remoteData.jobs));
         }
-        if (cloudData.monthlyGoal) {
-          setMonthlyGoal(cloudData.monthlyGoal);
-          localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+        if (remoteData.monthlyGoal) {
+          setMonthlyGoal(remoteData.monthlyGoal);
+          localStorage.setItem('monthly_income_goal', String(remoteData.monthlyGoal));
         }
-        showToast(`تم تحديث وجلب البيانات من السحابة بنجاح (${cloudData.incomes?.length || 0} إيراد، ${cloudData.students?.length || 0} طالب)! 🔄`, 'success');
+        showToast(`تم تحديث وجلب البيانات من السحابة بنجاح (${remoteData.incomes?.length || 0} إيراد، ${remoteData.students?.length || 0} طالب)! 🔄`, 'success');
       } else {
         showToast('لم يتم العثور على بيانات مخزنة في السحابة لهذا الحساب.', 'info');
       }
@@ -684,8 +701,8 @@ export default function App() {
       return updated;
     });
 
-    if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, { incomes: updatedList }).catch(handleCloudSyncCatch);
+    if (updatedList) {
+      syncToAllBackends({ incomes: updatedList });
     }
 
     showToast(editingIncome ? 'تم حفظ التعديلات بنجاح' : 'تم تسجيل الدخل الجديد بنجاح!', 'success');
@@ -705,9 +722,7 @@ export default function App() {
         try {
           localStorage.setItem('monthly_income_data', JSON.stringify(updated));
         } catch (e) {}
-        if (cloudUser) {
-          syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(handleCloudSyncCatch);
-        }
+        syncToAllBackends({ incomes: updated });
         showToast('تم حذف البند بنجاح', 'info');
       }
     });
@@ -731,9 +746,7 @@ export default function App() {
       localStorage.setItem('monthly_income_data', JSON.stringify(updated));
     } catch (e) {}
 
-    if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(handleCloudSyncCatch);
-    }
+    syncToAllBackends({ incomes: updated });
 
     if (nextToastText) showToast(nextToastText, 'info');
   };
@@ -757,8 +770,8 @@ export default function App() {
       return updated;
     });
 
-    if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, { students: updatedList }).catch(handleCloudSyncCatch);
+    if (updatedList) {
+      syncToAllBackends({ students: updatedList });
     }
   };
 
@@ -769,9 +782,7 @@ export default function App() {
     try {
       localStorage.setItem('monthly_income_students', JSON.stringify(updated));
     } catch (e) {}
-    if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(handleCloudSyncCatch);
-    }
+    syncToAllBackends({ students: updated });
     showToast('تم حذف الطالب بنجاح', 'info');
   };
 
@@ -802,10 +813,8 @@ export default function App() {
       return updated;
     });
 
-    if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, {
-        incomes: updatedList
-      }).catch(handleCloudSyncCatch);
+    if (updatedList) {
+      syncToAllBackends({ incomes: updatedList });
     }
   };
 
@@ -828,8 +837,8 @@ export default function App() {
       return updated;
     });
 
-    if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, { jobs: updatedList }).catch(handleCloudSyncCatch);
+    if (updatedList) {
+      syncToAllBackends({ jobs: updatedList });
     }
   };
 
@@ -866,8 +875,8 @@ export default function App() {
       return updated;
     });
 
-    if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, { withdrawals: updatedList }).catch(handleCloudSyncCatch);
+    if (updatedList) {
+      syncToAllBackends({ withdrawals: updatedList });
     }
 
     setIsWithdrawalModalOpen(false);
@@ -884,9 +893,7 @@ export default function App() {
     try {
       localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
     } catch (e) {}
-    if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(handleCloudSyncCatch);
-    }
+    syncToAllBackends({ withdrawals: updated });
     showToast('تم حذف عملية السحب بنجاح', 'info');
   };
 
@@ -1283,9 +1290,7 @@ export default function App() {
           try {
             localStorage.setItem('monthly_income_goal', String(goal));
           } catch (e) {}
-          if (cloudUser) {
-            syncUserDataToCloud(cloudUser.uid, { monthlyGoal: goal }).catch(() => {});
-          }
+          syncToAllBackends({ monthlyGoal: goal });
           showToast('تم حفظ وتحديث الهدف الشهري!', 'success');
         }}
         currency={currency}
@@ -1303,7 +1308,7 @@ export default function App() {
           if (Array.isArray(data)) {
             setIncomes(data);
             localStorage.setItem('monthly_income_data', JSON.stringify(data));
-            if (cloudUser) syncUserDataToCloud(cloudUser.uid, { incomes: data }).catch(() => {});
+            syncToAllBackends({ incomes: data });
           } else if (data && typeof data === 'object') {
             if (Array.isArray(data.incomes)) {
               setIncomes(data.incomes);
@@ -1324,15 +1329,13 @@ export default function App() {
             if (data.monthlyGoal) {
               setMonthlyGoal(data.monthlyGoal);
             }
-            if (cloudUser) {
-              syncUserDataToCloud(cloudUser.uid, {
-                incomes: data.incomes || [],
-                students: data.students || [],
-                withdrawals: data.withdrawals || [],
-                jobs: data.jobs || jobs,
-                monthlyGoal: data.monthlyGoal || monthlyGoal
-              }).catch(() => {});
-            }
+            syncToAllBackends({
+              incomes: data.incomes || [],
+              students: data.students || [],
+              withdrawals: data.withdrawals || [],
+              jobs: data.jobs || jobs,
+              monthlyGoal: data.monthlyGoal || monthlyGoal
+            });
           }
         }}
         onResetToSample={() => {

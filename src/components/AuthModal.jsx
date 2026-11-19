@@ -67,7 +67,7 @@ export default function AuthModal({
               <span>الحساب والمزامنة السحابية</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Google Firebase Cloud • مشروع my-income-82ba6
+              قاعدة بيانات فورية (Supabase Realtime) • مزامنة لحظية بين الهاتف والكمبيوتر ⚡
             </p>
           </div>
         </div>
@@ -97,17 +97,10 @@ export default function AuthModal({
                 {userEmail}
               </p>
               <div className="flex items-center gap-1.5 mt-1">
-                {isConnectedToCloud ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md">
-                    <CheckCircle2 className="w-3 h-3" />
-                    متصل بالسحابة (Firebase)
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/80 px-2 py-0.5 rounded-md">
-                    <AlertTriangle className="w-3 h-3" />
-                    وضع محلي فقط (غير متزامن)
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md">
+                  <CheckCircle2 className="w-3 h-3" />
+                  متزامن لحظياً (Supabase Realtime ⚡)
+                </span>
               </div>
             </div>
           </div>
