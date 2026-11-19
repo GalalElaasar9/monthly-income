@@ -230,55 +230,68 @@ export default function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Listen to Firestore real-time updates when logged in
+  const [isInitialCloudLoaded, setIsInitialCloudLoaded] = useState(false);
+
+  // 1. Initial Cloud Sync & Realtime Subscription
   useEffect(() => {
-    if (!cloudUser) return;
+    if (!cloudUser) {
+      setIsInitialCloudLoaded(false);
+      return;
+    }
 
-    const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
-      if (cloudData) {
-        if (Array.isArray(cloudData.incomes)) {
-          setIncomes((prev) => {
-            const merged = mergeRecordsById(prev, cloudData.incomes);
-            localStorage.setItem('monthly_income_data', JSON.stringify(merged));
-            return merged;
-          });
-        }
-        if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
-          setJobs((prev) => {
-            const merged = mergeRecordsById(cloudData.jobs, prev);
-            localStorage.setItem('monthly_income_jobs', JSON.stringify(merged));
-            return merged;
-          });
-        }
-        if (Array.isArray(cloudData.students)) {
-          setStudents((prev) => {
-            const merged = mergeRecordsById(prev, cloudData.students);
-            localStorage.setItem('monthly_income_students', JSON.stringify(merged));
-            return merged;
-          });
-        }
-        if (Array.isArray(cloudData.withdrawals)) {
-          setWithdrawals((prev) => {
-            const merged = mergeRecordsById(prev, cloudData.withdrawals);
-            localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
-            return merged;
-          });
-        }
-        if (cloudData.monthlyGoal) setMonthlyGoal(cloudData.monthlyGoal);
-      }
-    });
+    let isMounted = true;
 
-    return () => unsubscribeDoc();
-  }, [cloudUser]);
-
-  // Auto push local data to Cloud when user logs in so mobile can immediately access it
-  useEffect(() => {
-    if (!cloudUser) return;
-    
-    const autoSyncToCloud = async () => {
+    const runInitialSync = async () => {
+      setIsSyncing(true);
       try {
+        const cloudData = await fetchUserDataFromCloud(cloudUser.uid);
+        if (!isMounted) return;
+
         const hasLocalData = incomes.length > 0 || students.length > 0 || withdrawals.length > 0;
-        if (hasLocalData) {
+        const hasRemoteData = cloudData && (
+          (Array.isArray(cloudData.incomes) && cloudData.incomes.length > 0) ||
+          (Array.isArray(cloudData.students) && cloudData.students.length > 0) ||
+          (Array.isArray(cloudData.withdrawals) && cloudData.withdrawals.length > 0)
+        );
+
+        if (hasRemoteData) {
+          // Cloud has data! Merge or load cloud data safely
+          const mergedIncomes = mergeRecordsById(incomes, cloudData.incomes);
+          const mergedStudents = mergeRecordsById(students, cloudData.students);
+          const mergedWithdrawals = mergeRecordsById(withdrawals, cloudData.withdrawals);
+          const mergedJobs = (cloudData.jobs && cloudData.jobs.length > 0) ? cloudData.jobs : jobs;
+          const mergedGoal = cloudData.monthlyGoal || monthlyGoal;
+
+          setIncomes(mergedIncomes);
+          setStudents(mergedStudents);
+          setWithdrawals(mergedWithdrawals);
+          setJobs(mergedJobs);
+          setMonthlyGoal(mergedGoal);
+
+          localStorage.setItem('monthly_income_data', JSON.stringify(mergedIncomes));
+          localStorage.setItem('monthly_income_students', JSON.stringify(mergedStudents));
+          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(mergedWithdrawals));
+          localStorage.setItem('monthly_income_jobs', JSON.stringify(mergedJobs));
+          localStorage.setItem('monthly_income_goal', String(mergedGoal));
+
+          // If this device had new records not yet in cloud, push the merged dataset to cloud
+          const hasLocalExtras = (incomes.length > (cloudData.incomes?.length || 0)) ||
+                                 (students.length > (cloudData.students?.length || 0)) ||
+                                 (withdrawals.length > (cloudData.withdrawals?.length || 0));
+          if (hasLocalExtras) {
+            await syncUserDataToCloud(cloudUser.uid, {
+              incomes: mergedIncomes,
+              students: mergedStudents,
+              withdrawals: mergedWithdrawals,
+              jobs: mergedJobs,
+              monthlyGoal: mergedGoal,
+              currency: currency.code
+            });
+          }
+
+          showToast(`تم استرجاع ومزامنة البيانات من السحابة بنجاح (${mergedIncomes.length} إيراد، ${mergedStudents.length} طالب) ☁️`, 'success');
+        } else if (hasLocalData) {
+          // Cloud is empty, but this device has local data! Push to cloud so other devices get it
           await syncUserDataToCloud(cloudUser.uid, {
             incomes,
             jobs,
@@ -287,17 +300,62 @@ export default function App() {
             monthlyGoal,
             currency: currency.code
           });
+          showToast(`تم رفع بيانات هذا الجهاز بنجاح إلى السحابة (${incomes.length} إيراد) ☁️`, 'success');
         }
       } catch (err) {
-        console.warn('Auto cloud sync on login:', err);
+        console.warn('Initial cloud sync error:', err);
+      } finally {
+        if (isMounted) {
+          setIsSyncing(false);
+          setIsInitialCloudLoaded(true);
+        }
       }
     };
 
-    autoSyncToCloud();
+    runInitialSync();
+
+    // 2. Real-time Subscription to listen for changes from other tabs/devices
+    const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
+      if (!cloudData) return;
+      if (Array.isArray(cloudData.incomes) && cloudData.incomes.length > 0) {
+        setIncomes((prev) => {
+          const merged = mergeRecordsById(prev, cloudData.incomes);
+          localStorage.setItem('monthly_income_data', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      if (Array.isArray(cloudData.students) && cloudData.students.length > 0) {
+        setStudents((prev) => {
+          const merged = mergeRecordsById(prev, cloudData.students);
+          localStorage.setItem('monthly_income_students', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      if (Array.isArray(cloudData.withdrawals) && cloudData.withdrawals.length > 0) {
+        setWithdrawals((prev) => {
+          const merged = mergeRecordsById(prev, cloudData.withdrawals);
+          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
+        setJobs(cloudData.jobs);
+        localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+      }
+      if (cloudData.monthlyGoal) {
+        setMonthlyGoal(cloudData.monthlyGoal);
+        localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribeDoc();
+    };
   }, [cloudUser]);
 
-  // Sync to Cloud helper
-  const handleSyncToCloud = async () => {
+  // Explicit Manual Push: Push current device state to Cloud
+  const handleManualPushToCloud = async () => {
     if (!cloudUser) {
       setIsFirebaseModalOpen(true);
       return;
@@ -312,42 +370,77 @@ export default function App() {
         monthlyGoal,
         currency: currency.code
       });
-      showToast('تمت مزامنة كل بياناتك بنجاح إلى السحابة!', 'success');
+      showToast(`تم رفع ومزامنة كافة بيانات هذا الجهاز بنجاح (${incomes.length} إيراد، ${students.length} طالب، ${withdrawals.length} سحب) ☁️`, 'success');
     } catch (err) {
-      showToast('حدث خطأ أثناء المزامنة: ' + err.message, 'error');
+      console.error(err);
+      showToast('حدث خطأ أثناء الرفع إلى السحابة: ' + (err.message || 'خطأ غير معروف'), 'error');
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // Local Persistence Effects
+  // Explicit Manual Pull: Fetch latest data from Cloud and update this device
+  const handleManualPullFromCloud = async () => {
+    if (!cloudUser) {
+      setIsFirebaseModalOpen(true);
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const cloudData = await fetchUserDataFromCloud(cloudUser.uid);
+      if (cloudData) {
+        if (Array.isArray(cloudData.incomes)) {
+          setIncomes(cloudData.incomes);
+          localStorage.setItem('monthly_income_data', JSON.stringify(cloudData.incomes));
+        }
+        if (Array.isArray(cloudData.students)) {
+          setStudents(cloudData.students);
+          localStorage.setItem('monthly_income_students', JSON.stringify(cloudData.students));
+        }
+        if (Array.isArray(cloudData.withdrawals)) {
+          setWithdrawals(cloudData.withdrawals);
+          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(cloudData.withdrawals));
+        }
+        if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
+          setJobs(cloudData.jobs);
+          localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+        }
+        if (cloudData.monthlyGoal) {
+          setMonthlyGoal(cloudData.monthlyGoal);
+          localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+        }
+        showToast(`تم تحديث وجلب البيانات من السحابة بنجاح (${cloudData.incomes?.length || 0} إيراد، ${cloudData.students?.length || 0} طالب)! 🔄`, 'success');
+      } else {
+        showToast('لم يتم العثور على بيانات مخزنة في السحابة لهذا الحساب.', 'info');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('حدث خطأ أثناء جلب البيانات من السحابة: ' + (err.message || 'خطأ غير معروف'), 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Local Storage Persistence (Safe local updates without blindly overwriting cloud on mount)
   useEffect(() => {
     localStorage.setItem('monthly_income_data', JSON.stringify(incomes));
-    if (cloudUser && !isSyncing) {
-      syncUserDataToCloud(cloudUser.uid, { incomes }).catch(() => {});
-    }
-  }, [incomes, cloudUser]);
+  }, [incomes]);
 
   useEffect(() => {
     localStorage.setItem('monthly_income_jobs', JSON.stringify(jobs));
-    if (cloudUser && !isSyncing) {
-      syncUserDataToCloud(cloudUser.uid, { jobs }).catch(() => {});
-    }
-  }, [jobs, cloudUser]);
+  }, [jobs]);
 
   useEffect(() => {
     localStorage.setItem('monthly_income_students', JSON.stringify(students));
-    if (cloudUser && !isSyncing) {
-      syncUserDataToCloud(cloudUser.uid, { students }).catch(() => {});
-    }
-  }, [students, cloudUser]);
+  }, [students]);
 
   useEffect(() => {
     localStorage.setItem('monthly_income_withdrawals', JSON.stringify(withdrawals));
-    if (cloudUser && !isSyncing) {
-      syncUserDataToCloud(cloudUser.uid, { withdrawals }).catch(() => {});
-    }
-  }, [withdrawals, cloudUser]);
+  }, [withdrawals]);
+
+  useEffect(() => {
+    localStorage.setItem('monthly_income_goal', String(monthlyGoal));
+  }, [monthlyGoal]);
 
   useEffect(() => {
     if (currentUser) {
@@ -360,13 +453,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('monthly_income_currency', currency.code);
   }, [currency]);
-
-  useEffect(() => {
-    localStorage.setItem('monthly_income_goal', String(monthlyGoal));
-    if (cloudUser && !isSyncing) {
-      syncUserDataToCloud(cloudUser.uid, { monthlyGoal }).catch(() => {});
-    }
-  }, [monthlyGoal, cloudUser]);
 
   useEffect(() => {
     localStorage.setItem('monthly_income_dark_mode', JSON.stringify(darkMode));
@@ -511,44 +597,75 @@ export default function App() {
       confirmText: 'نعم، حذف',
       isDanger: true,
       onConfirm: () => {
-        setIncomes((prev) => prev.filter((i) => i.id !== id));
+        const updated = incomes.filter((i) => i.id !== id);
+        setIncomes(updated);
+        try {
+          localStorage.setItem('monthly_income_data', JSON.stringify(updated));
+        } catch (e) {}
+        if (cloudUser) {
+          syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(() => {});
+        }
         showToast('تم حذف البند بنجاح', 'info');
       }
     });
   };
 
   const handleToggleStatus = (id) => {
-    setIncomes((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextStatus = item.status === 'received' ? 'pending' : 'received';
-          showToast(
-            nextStatus === 'received' ? `تم تحويل "${item.title}" إلى مُستلم ✅` : `تم تحويل "${item.title}" إلى قيد الانتظار ⏳`,
-            'info'
-          );
-          return { ...item, status: nextStatus };
-        }
-        return item;
-      })
-    );
+    let nextToastText = '';
+    const updated = incomes.map((item) => {
+      if (item.id === id) {
+        const nextStatus = item.status === 'received' ? 'pending' : 'received';
+        nextToastText = nextStatus === 'received'
+          ? `تم تحويل "${item.title}" إلى مُستلم ✅`
+          : `تم تحويل "${item.title}" إلى قيد الانتظار ⏳`;
+        return { ...item, status: nextStatus };
+      }
+      return item;
+    });
+
+    setIncomes(updated);
+    try {
+      localStorage.setItem('monthly_income_data', JSON.stringify(updated));
+    } catch (e) {}
+
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(() => {});
+    }
+
+    if (nextToastText) showToast(nextToastText, 'info');
   };
 
   // Student Operations
   const handleSaveStudent = (studentData) => {
     setStudents((prev) => {
       const index = prev.findIndex((s) => s.id === studentData.id);
+      let updated;
       if (index >= 0) {
-        const copy = [...prev];
-        copy[index] = studentData;
-        return copy;
+        updated = [...prev];
+        updated[index] = studentData;
       } else {
-        return [...prev, studentData];
+        updated = [...prev, studentData];
       }
+      try {
+        localStorage.setItem('monthly_income_students', JSON.stringify(updated));
+      } catch (e) {}
+      if (cloudUser) {
+        syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(() => {});
+      }
+      return updated;
     });
   };
 
   const handleDeleteStudent = (id) => {
-    setStudents((prev) => prev.filter((s) => s.id !== id));
+    const updated = students.filter((s) => s.id !== id);
+    setStudents(updated);
+    try {
+      localStorage.setItem('monthly_income_students', JSON.stringify(updated));
+    } catch (e) {}
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(() => {});
+    }
+    showToast('تم حذف الطالب بنجاح', 'info');
   };
 
   // Fast One-Click Student Payment Recording
@@ -597,6 +714,9 @@ export default function App() {
       try {
         localStorage.setItem('monthly_income_jobs', JSON.stringify(updated));
       } catch (e) {}
+      if (cloudUser) {
+        syncUserDataToCloud(cloudUser.uid, { jobs: updated }).catch(() => {});
+      }
       return updated;
     });
   };
@@ -623,6 +743,9 @@ export default function App() {
       try {
         localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
       } catch (e) {}
+      if (cloudUser) {
+        syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(() => {});
+      }
       return updated;
     });
     setIsWithdrawalModalOpen(false);
@@ -633,7 +756,14 @@ export default function App() {
   };
 
   const handleDeleteWithdrawal = (id) => {
-    setWithdrawals((prev) => prev.filter((w) => w.id !== id));
+    const updated = withdrawals.filter((w) => w.id !== id);
+    setWithdrawals(updated);
+    try {
+      localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
+    } catch (e) {}
+    if (cloudUser) {
+      syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(() => {});
+    }
     showToast('تم حذف عملية السحب بنجاح', 'info');
   };
 
@@ -707,6 +837,14 @@ export default function App() {
         setDarkMode={setDarkMode}
         currentUser={currentUser}
         cloudUser={cloudUser}
+        isSyncing={isSyncing}
+        onOpenCloudSync={() => {
+          if (cloudUser) {
+            setIsAuthModalOpen(true);
+          } else {
+            setIsFirebaseModalOpen(true);
+          }
+        }}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenAddModal={() => {
           setEditingIncome(null);
@@ -897,6 +1035,17 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         currentUser={currentUser}
+        cloudUser={cloudUser}
+        isSyncing={isSyncing}
+        onManualPushToCloud={handleManualPushToCloud}
+        onManualPullFromCloud={handleManualPullFromCloud}
+        onOpenCloudLogin={() => {
+          setIsAuthModalOpen(false);
+          setIsFirebaseModalOpen(true);
+        }}
+        incomesCount={incomes.length}
+        studentsCount={students.length}
+        withdrawalsCount={withdrawals.length}
         onSaveUser={setCurrentUser}
         onLogout={handleLogout}
       />
@@ -906,7 +1055,7 @@ export default function App() {
         onClose={() => setIsFirebaseModalOpen(false)}
         cloudUser={cloudUser}
         setCloudUser={setCloudUser}
-        onSyncToCloud={handleSyncToCloud}
+        onSyncToCloud={handleManualPushToCloud}
         isSyncing={isSyncing}
         showToast={showToast}
       />
@@ -917,6 +1066,12 @@ export default function App() {
         currentGoal={monthlyGoal}
         onSaveGoal={(goal) => {
           setMonthlyGoal(goal);
+          try {
+            localStorage.setItem('monthly_income_goal', String(goal));
+          } catch (e) {}
+          if (cloudUser) {
+            syncUserDataToCloud(cloudUser.uid, { monthlyGoal: goal }).catch(() => {});
+          }
           showToast('تم حفظ وتحديث الهدف الشهري!', 'success');
         }}
         currency={currency}

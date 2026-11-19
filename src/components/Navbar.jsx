@@ -11,7 +11,9 @@ import {
   Menu,
   X,
   User,
-  Layers
+  Layers,
+  Cloud,
+  RefreshCw
 } from 'lucide-react';
 import { ARABIC_MONTHS } from '../constants';
 
@@ -22,6 +24,8 @@ export default function Navbar({
   setDarkMode,
   currentUser,
   cloudUser,
+  isSyncing = false,
+  onOpenCloudSync,
   onOpenAuthModal,
   onOpenAddModal,
   onOpenExportModal
@@ -131,6 +135,23 @@ export default function Navbar({
             >
               <Plus className="w-4 h-4" />
               <span>تسجيل دخل</span>
+            </button>
+
+            {/* Cloud Sync Button */}
+            <button
+              onClick={onOpenCloudSync}
+              className={`flex items-center gap-2 px-3 py-2 sm:py-2.5 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm ${
+                cloudUser
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40'
+              }`}
+              title={cloudUser ? `متصل بالسحابة (${cloudUser.email}) - انقر لخيارات المزامنة` : 'غير متصل بالسحابة - انقر للربط والمزامنة'}
+            >
+              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : (cloudUser ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600')}`} />
+              <span className="hidden md:inline">
+                {isSyncing ? 'جارٍ المزامنة...' : 'مزامنة السحابة'}
+              </span>
+              <span className={`w-2 h-2 rounded-full ${cloudUser ? 'bg-emerald-500 ring-2 ring-emerald-500/30 animate-pulse' : 'bg-amber-500 ring-2 ring-amber-500/30'}`} />
             </button>
 
             {/* Calendar Icon Button & Popover */}
@@ -269,6 +290,19 @@ export default function Navbar({
               <span>دخل</span>
             </button>
 
+            {/* Quick Cloud Sync CTA */}
+            <button
+              onClick={onOpenCloudSync}
+              className={`p-1.5 rounded-xl border transition-all duration-200 active:scale-95 ${
+                cloudUser
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 text-amber-700'
+              }`}
+              title={cloudUser ? `متصل بالسحابة (${cloudUser.email})` : 'مزامنة السحابة'}
+            >
+              <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce text-emerald-500' : ''}`} />
+            </button>
+
             {/* Hamburger Bars Menu Trigger */}
             <div className="relative">
               <button
@@ -351,6 +385,32 @@ export default function Navbar({
                     </div>
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       نسخ احتياطي وتصدير
+                    </span>
+                  </button>
+
+                  {/* Cloud Sync Item */}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenCloudSync();
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-right transition"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <Cloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce' : ''}`} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          مزامنة السحابة
+                        </span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-normal">
+                          {cloudUser ? 'متصل بالسحابة' : 'غير متصل (انقر للربط)'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+                      {isSyncing ? 'جارٍ...' : (cloudUser ? '🟢 متصل' : '⚠️ ربط')}
                     </span>
                   </button>
 
