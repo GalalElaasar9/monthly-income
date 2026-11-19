@@ -23,8 +23,8 @@ export const DEFAULT_JOBS = [
     id: 'job-center',
     title: 'سنتر التدريب / الأكاديمية',
     category: 'center',
-    type: 'fixed',
-    defaultAmount: 2000,
+    type: 'variable',
+    defaultAmount: 0,
     color: '#3b82f6',
     icon: 'GraduationCap',
     description: 'مستحقات التدريس بالسنتر'

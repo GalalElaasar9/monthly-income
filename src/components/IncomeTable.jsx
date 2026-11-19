@@ -39,7 +39,11 @@ export default function IncomeTable({
           (item.studentName && item.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
           (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        const matchesJob = selectedJobFilter === 'all' || item.jobId === selectedJobFilter;
+        const selectedJobObj = jobs.find((j) => j.id === selectedJobFilter);
+        const matchesJob =
+          selectedJobFilter === 'all' ||
+          item.jobId === selectedJobFilter ||
+          (!item.jobId && selectedJobObj && item.category === selectedJobObj.category);
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
 
         return matchesSearch && matchesJob && matchesStatus;
@@ -181,7 +185,7 @@ export default function IncomeTable({
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
               {filteredIncomes.map((item) => {
-                const matchedJob = jobs.find((j) => j.id === item.jobId);
+                const matchedJob = jobs.find((j) => j.id === item.jobId) || jobs.find((j) => j.category === item.category);
                 const categoryMeta = CATEGORIES.find((c) => c.id === item.category) || {
                   name: item.category,
                   color: matchedJob?.color || '#10b981',

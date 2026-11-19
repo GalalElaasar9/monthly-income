@@ -44,6 +44,14 @@ export default function JobModal({
       return;
     }
 
+    let resolvedCategory = editingJob?.category;
+    if (!resolvedCategory) {
+      if (type === 'students') resolvedCategory = 'students';
+      else if (type === 'variable') resolvedCategory = 'private';
+      else if (title.includes('سنتر') || title.includes('أكاديمية')) resolvedCategory = 'center';
+      else resolvedCategory = 'salary';
+    }
+
     onSaveJob({
       id: editingJob ? editingJob.id : `job-${Date.now()}`,
       title: title.trim(),
@@ -52,7 +60,7 @@ export default function JobModal({
       description: description.trim(),
       icon,
       color,
-      category: type === 'students' ? 'students' : 'salary'
+      category: resolvedCategory
     });
 
     showToast(editingJob ? 'تم تعديل جهة العمل بنجاح' : 'تمت إضافة جهة العمل الجديدة بنجاح', 'success');

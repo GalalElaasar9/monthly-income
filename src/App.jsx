@@ -743,7 +743,11 @@ export default function App() {
         onClose={() => setIsIncomeModalOpen(false)}
         onSave={handleSaveIncome}
         editingIncome={editingIncome}
-        defaultDate={`${selectedMonth}-01`}
+        defaultDate={
+          new Date().toISOString().split('T')[0].startsWith(selectedMonth)
+            ? new Date().toISOString().split('T')[0]
+            : `${selectedMonth}-01`
+        }
         currency={currency}
         jobs={jobs}
         students={students}

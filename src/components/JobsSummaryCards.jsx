@@ -25,7 +25,9 @@ export default function JobsSummaryCards({
 }) {
   // Compute total for each job in the selected month
   const jobStats = jobs.map((job) => {
-    const jobIncomes = currentMonthIncomes.filter((inc) => inc.jobId === job.id);
+    const jobIncomes = currentMonthIncomes.filter(
+      (inc) => inc.jobId === job.id || (!inc.jobId && inc.category === job.category)
+    );
     const received = jobIncomes
       .filter((inc) => inc.status === 'received')
       .reduce((sum, inc) => sum + inc.amount, 0);

@@ -76,28 +76,38 @@ export default function IncomeModal({
       setSelectedStudentId('');
       
       const foundJob = jobs.find((j) => j.id === activeJobId);
+      const cat = foundJob?.category || 'salary';
+      setCategory(cat);
+
       if (foundJob && foundJob.type === 'students') {
         setTitle('اشتراك طالب أونلاين');
         setAmount('');
-        setCategory('students');
+        setClient('');
+      } else if (foundJob && (foundJob.id === 'job-center' || cat === 'center')) {
+        setTitle(`مستحقات السنتر - ${currentMonthName}`);
+        setAmount(foundJob.defaultAmount > 0 ? String(foundJob.defaultAmount) : '');
+        setClient('');
+      } else if (foundJob && (foundJob.id === 'job-private' || cat === 'private')) {
+        setTitle(`مشروع فريلانس - ${currentMonthName}`);
+        setAmount(foundJob.defaultAmount > 0 ? String(foundJob.defaultAmount) : '');
+        setClient('');
       } else if (foundJob && foundJob.defaultAmount > 0) {
         setTitle(`${foundJob.title} - ${currentMonthName}`);
         setAmount(String(foundJob.defaultAmount));
-        setCategory(foundJob.category || 'salary');
+        setClient(foundJob.title);
       } else {
-        setTitle('');
+        setTitle(foundJob?.title ? `${foundJob.title} - ${currentMonthName}` : '');
         setAmount('');
-        setCategory(foundJob?.category || 'salary');
+        setClient('');
       }
 
       setDate(defaultDate || new Date().toISOString().split('T')[0]);
       setStatus('received');
       setIsRecurring(false);
-      setClient('');
       setNotes('');
       setErrors({});
     }
-  }, [isOpen, editingIncome]);
+  }, [isOpen, editingIncome, initialJobId]);
 
   // When job changes
   const handleJobChange = (jobId) => {
@@ -105,23 +115,33 @@ export default function IncomeModal({
     const job = jobs.find((j) => j.id === jobId);
     if (!job) return;
 
-    setCategory(job.category || 'salary');
+    const cat = job.category || 'salary';
+    setCategory(cat);
 
     if (job.type === 'students') {
       setSelectedStudentId('');
       setTitle('اشتراك طالب');
       setAmount('');
       setClient('');
-    } else if (job.defaultAmount > 0) {
+    } else if (job.id === 'job-center' || cat === 'center') {
       setSelectedStudentId('');
-      setTitle(`${job.title} لشهر ${currentMonthName}`);
-      setAmount(String(job.defaultAmount));
-      setClient(job.title);
+      setTitle(`مستحقات السنتر - ${currentMonthName}`);
+      if (amount === '15000') setAmount('');
+      if (client === 'وظيفة الشركة') setClient('');
+    } else if (job.id === 'job-private' || cat === 'private') {
+      setSelectedStudentId('');
+      setTitle(`مشروع فريلانس - ${currentMonthName}`);
+      if (amount === '15000' || amount === '2000') setAmount('');
+      if (client === 'وظيفة الشركة' || client.includes('سنتر')) setClient('');
+    } else if (job.id === 'job-company') {
+      setSelectedStudentId('');
+      setTitle(`${job.title} - ${currentMonthName}`);
+      if (!amount || amount === '0') setAmount(String(job.defaultAmount || 15000));
+      if (!client) setClient(job.title);
     } else {
       setSelectedStudentId('');
-      setTitle(job.title);
-      setAmount('');
-      setClient('');
+      setTitle(`${job.title} - ${currentMonthName}`);
+      if (job.defaultAmount > 0) setAmount(String(job.defaultAmount));
     }
   };
 
@@ -278,12 +298,57 @@ export default function IncomeModal({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              عنوان أو تفاصيل البند <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                عنوان أو تفاصيل البند <span className="text-rose-500">*</span>
+              </label>
+              {/* Quick title suggestions */}
+              {currentJob?.category === 'center' && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setTitle(`مستحقات سنتر - ${currentMonthName}`)}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 font-medium transition"
+                  >
+                    + مستحقات سنتر
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTitle(`حصص ومراجعات السنتر - ${currentMonthName}`)}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 font-medium transition"
+                  >
+                    + حصص ومراجعات
+                  </button>
+                </div>
+              )}
+              {currentJob?.category === 'private' && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setTitle(`مشروع فريلانس - ${currentMonthName}`)}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 hover:bg-amber-100 font-medium transition"
+                  >
+                    + مشروع فريلانس
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTitle(`استشارة وشغل خاص - ${currentMonthName}`)}
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 hover:bg-amber-100 font-medium transition"
+                  >
+                    + استشارة خاصة
+                  </button>
+                </div>
+              )}
+            </div>
             <input
               type="text"
-              placeholder="مثال: راتب نوفمبر، اشتراك الطالب فلان..."
+              placeholder={
+                currentJob?.category === 'center'
+                  ? 'مثال: مستحقات سنتر الأمل، مراجعات مكثفة...'
+                  : currentJob?.category === 'private'
+                  ? 'مثال: تصميم تطبيق، استشارة لشركة كذا...'
+                  : 'مثال: راتب نوفمبر، مستحقات...'
+              }
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-xs sm:text-sm text-slate-900 dark:text-white outline-none transition ${
@@ -293,23 +358,54 @@ export default function IncomeModal({
             {errors.title && <p className="text-[11px] text-rose-500 mt-1">{errors.title}</p>}
           </div>
 
+          {/* Client / Center Name for non-student jobs */}
+          {!isStudentJob && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                {currentJob?.category === 'center'
+                  ? 'اسم السنتر / الأكاديمية (اختياري)'
+                  : currentJob?.category === 'private'
+                  ? 'اسم العميل / المشروع / المنصة (اختياري)'
+                  : 'اسم جهة العمل أو الشركة (اختياري)'}
+              </label>
+              <div className="relative">
+                <Building2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={
+                    currentJob?.category === 'center'
+                      ? 'مثال: سنتر الأقصى، سنتر الأوائل...'
+                      : currentJob?.category === 'private'
+                      ? 'مثال: منصة خمسات، شركة التقنية، العميل أحمد...'
+                      : 'مثال: اسم الشركة...'
+                  }
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="w-full pl-3 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Amount & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 المبلغ ({currency.symbol}) <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-sm font-bold text-slate-900 dark:text-white outline-none transition ${
-                  errors.amount ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500'
-                }`}
-              />
+              <div className="relative">
+                <DollarSign className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className={`w-full pl-3 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-sm font-bold text-slate-900 dark:text-white outline-none transition ${
+                    errors.amount ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500'
+                  }`}
+                />
+              </div>
               {errors.amount && <p className="text-[11px] text-rose-500 mt-1">{errors.amount}</p>}
             </div>
 
@@ -317,14 +413,17 @@ export default function IncomeModal({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 تاريخ الاستلام <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-xs sm:text-sm text-slate-900 dark:text-white outline-none transition ${
-                  errors.date ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500'
-                }`}
-              />
+              <div className="relative">
+                <Calendar className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={`w-full pl-3 pr-9 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-xs sm:text-sm text-slate-900 dark:text-white outline-none transition ${
+                    errors.date ? 'border-rose-500 ring-1 ring-rose-500' : 'border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500'
+                  }`}
+                />
+              </div>
               {errors.date && <p className="text-[11px] text-rose-500 mt-1">{errors.date}</p>}
             </div>
           </div>
