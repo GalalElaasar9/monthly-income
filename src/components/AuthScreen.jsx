@@ -92,11 +92,13 @@ export default function AuthScreen({
       console.error(err);
       let errMsg = 'حدث خطأ أثناء تسجيل الدخول، تأكد من صحة البيانات.';
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
-        errMsg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+        errMsg = isRegister ? 'تعذر إنشاء الحساب، يرجى المحاولة ببيانات أخرى.' : 'البريد أو كلمة المرور غير صحيحة. إذا كنت مستخدماً جديداً، انقر فوق "إنشاء حساب جديد".';
+      } else if (err.code === 'auth/user-not-found') {
+        errMsg = 'هذا البريد غير مسجل. يرجى الضغط على "إنشاء حساب جديد" في الأعلى.';
       } else if (err.code === 'auth/email-already-in-use') {
-        errMsg = 'هذا البريد مسجل بالفعل، يمكنك تسجيل الدخول به.';
+        errMsg = 'هذا البريد مسجل بالفعل، يمكنك تسجيل الدخول به مباشرة.';
       } else if (err.code === 'auth/weak-password') {
-        errMsg = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.';
+        errMsg = 'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل.';
       }
       showToast(errMsg, 'error');
     } finally {
@@ -340,6 +342,27 @@ export default function AuthScreen({
             >
               {isRegister ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
               <span>{isLoading ? 'جارٍ التحقق...' : (isRegister ? 'إنشاء الحساب والدخول' : 'تسجيل الدخول الآن')}</span>
+            </button>
+          </div>
+
+          {/* Offline / Local fallback access */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                const localUser = {
+                  name: 'حساب محلي',
+                  role: 'معلم ومحاضر',
+                  email: 'local@device.app',
+                  avatar: 'م',
+                  createdAt: new Date().toISOString()
+                };
+                showToast('مرحباً بك! تم الدخول بنجاح مع حفظ البيانات محلياً على جهازك.', 'success');
+                onLoginSuccess(localUser);
+              }}
+              className="text-[11px] text-slate-400 hover:text-emerald-400 transition underline underline-offset-4"
+            >
+              المتابعة بحساب محلي (دون الحاجة لـ Google أو الإنترنت)
             </button>
           </div>
 

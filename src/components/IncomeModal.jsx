@@ -17,7 +17,7 @@ import {
   Clock,
   Check
 } from 'lucide-react';
-import { CATEGORIES, ARABIC_MONTHS } from '../constants';
+import { CATEGORIES, ARABIC_MONTHS, parseNumberInput } from '../constants';
 import CategoryIcon from './CategoryIcon';
 import ModalWrapper from './ModalWrapper';
 
@@ -147,8 +147,8 @@ export default function IncomeModal({
     if (!title.trim()) {
       newErrors.title = 'يرجى إدخال عنوان أو مصدر الدخل';
     }
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    const parsedAmount = parseNumberInput(amount);
+    if (parsedAmount <= 0) {
       newErrors.amount = 'يرجى إدخال مبلغ صحيح أكبر من صفر';
     }
     if (!date) {

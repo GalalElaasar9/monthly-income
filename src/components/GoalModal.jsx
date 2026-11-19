@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Target, Check } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
+import { parseNumberInput } from '../constants';
 
 export default function GoalModal({
   isOpen,
@@ -19,8 +20,8 @@ export default function GoalModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const parsed = parseFloat(goal);
-    onSaveGoal(isNaN(parsed) || parsed < 0 ? 0 : parsed);
+    const parsed = parseNumberInput(goal);
+    onSaveGoal(parsed < 0 ? 0 : parsed);
     onClose();
   };
 

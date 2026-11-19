@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Briefcase, Save } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
+import { parseNumberInput } from '../constants';
 
 export default function JobModal({
   isOpen,
@@ -47,7 +48,7 @@ export default function JobModal({
       id: editingJob ? editingJob.id : `job-${Date.now()}`,
       title: title.trim(),
       type,
-      defaultAmount: parseFloat(defaultAmount) || 0,
+      defaultAmount: parseNumberInput(defaultAmount) || 0,
       description: description.trim(),
       icon,
       color,

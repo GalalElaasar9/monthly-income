@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Save, GraduationCap, DollarSign, Phone, FileText } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
+import { parseNumberInput } from '../constants';
 
 export default function StudentModal({
   isOpen,
@@ -39,8 +40,8 @@ export default function StudentModal({
       showToast('يرجى إدخال اسم الطالب', 'error');
       return;
     }
-    const fee = parseFloat(monthlyFee);
-    if (isNaN(fee) || fee <= 0) {
+    const fee = parseNumberInput(monthlyFee);
+    if (fee <= 0) {
       showToast('يرجى إدخال مبلغ اشتراك صحيح أكبر من صفر', 'error');
       return;
     }

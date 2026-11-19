@@ -68,15 +68,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('monthly_income_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.isDemo || parsed.email === 'ahmed@example.com') {
-          localStorage.removeItem('monthly_income_user');
-          return null;
-        }
-        return parsed;
-      }
-      return null;
+      return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
     }
@@ -135,8 +127,15 @@ export default function App() {
     }
   });
 
-  // 8. Selected Month (YYYY-MM)
-  const [selectedMonth, setSelectedMonth] = useState('2026-11');
+  // 8. Selected Month (YYYY-MM) - Defaults to the user's current month
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    try {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    } catch {
+      return '2026-11';
+    }
+  });
 
   // 9. Fixed Currency: Egyptian Pound (ج.م)
   const currency = DEFAULT_CURRENCY;
@@ -223,10 +222,18 @@ export default function App() {
 
     const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
       if (cloudData) {
-        if (Array.isArray(cloudData.incomes)) setIncomes(cloudData.incomes);
-        if (Array.isArray(cloudData.jobs)) setJobs(cloudData.jobs);
-        if (Array.isArray(cloudData.students)) setStudents(cloudData.students);
-        if (Array.isArray(cloudData.withdrawals)) setWithdrawals(cloudData.withdrawals);
+        if (Array.isArray(cloudData.incomes)) {
+          setIncomes((prev) => (cloudData.incomes.length === 0 && prev.length > 0 ? prev : cloudData.incomes));
+        }
+        if (Array.isArray(cloudData.jobs)) {
+          setJobs((prev) => (cloudData.jobs.length === 0 && prev.length > 0 ? prev : cloudData.jobs));
+        }
+        if (Array.isArray(cloudData.students)) {
+          setStudents((prev) => (cloudData.students.length === 0 && prev.length > 0 ? prev : cloudData.students));
+        }
+        if (Array.isArray(cloudData.withdrawals)) {
+          setWithdrawals((prev) => (cloudData.withdrawals.length === 0 && prev.length > 0 ? prev : cloudData.withdrawals));
+        }
         if (cloudData.monthlyGoal) setMonthlyGoal(cloudData.monthlyGoal);
       }
     });
@@ -409,6 +416,14 @@ export default function App() {
 
   // Income Operations
   const handleSaveIncome = (incomeData) => {
+    // If the record belongs to another month, switch to it so the user sees it immediately
+    if (incomeData.date && incomeData.date.length >= 7) {
+      const itemMonth = incomeData.date.slice(0, 7);
+      if (itemMonth !== selectedMonth) {
+        setSelectedMonth(itemMonth);
+      }
+    }
+
     setIncomes((prev) => {
       const existingIndex = prev.findIndex((i) => i.id === incomeData.id);
       if (existingIndex >= 0) {
@@ -506,6 +521,14 @@ export default function App() {
 
   // Withdrawal Operations (سحب المبالغ والمصروفات)
   const handleSaveWithdrawal = (withdrawalData) => {
+    // If the withdrawal belongs to another month, switch to it so the user sees it immediately
+    if (withdrawalData.date && withdrawalData.date.length >= 7) {
+      const itemMonth = withdrawalData.date.slice(0, 7);
+      if (itemMonth !== selectedMonth) {
+        setSelectedMonth(itemMonth);
+      }
+    }
+
     setWithdrawals((prev) => {
       const existingIndex = prev.findIndex((w) => w.id === withdrawalData.id);
       if (existingIndex >= 0) {

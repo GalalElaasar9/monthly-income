@@ -91,3 +91,21 @@ export const GRADE_OPTIONS = [
   'أخرى'
 ];
 
+// Handles standard, Eastern Arabic (١٢٣), and comma-formatted numbers
+export const parseNumberInput = (value) => {
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  if (!value) return 0;
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  const persianNumerals = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  
+  let cleaned = String(value).trim();
+  for (let i = 0; i < 10; i++) {
+    cleaned = cleaned.replaceAll(arabicNumerals[i], String(i));
+    cleaned = cleaned.replaceAll(persianNumerals[i], String(i));
+  }
+  cleaned = cleaned.replace(/,/g, '').replace(/\s/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+

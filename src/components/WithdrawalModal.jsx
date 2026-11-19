@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ArrowDownRight, Save, DollarSign, Calendar, FileText, Tag, AlertCircle } from 'lucide-react';
 import ModalWrapper from './ModalWrapper';
-import { WITHDRAWAL_REASONS } from '../constants';
+import { WITHDRAWAL_REASONS, parseNumberInput } from '../constants';
 
 export default function WithdrawalModal({
   isOpen,
@@ -40,8 +40,8 @@ export default function WithdrawalModal({
     e.preventDefault();
     const newErrors = {};
 
-    const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    const parsedAmount = parseNumberInput(amount);
+    if (parsedAmount <= 0) {
       newErrors.amount = 'يرجى إدخال مبلغ سحب صحيح أكبر من صفر';
     }
     if (!reason.trim()) {
