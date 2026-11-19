@@ -7,6 +7,8 @@ import IncomeTable from './components/IncomeTable';
 import IncomeModal from './components/IncomeModal';
 import WithdrawalModal from './components/WithdrawalModal';
 import WithdrawalsList from './components/WithdrawalsList';
+import WithdrawalsPage from './components/WithdrawalsPage';
+import { Wallet, ArrowDownRight, Plus } from 'lucide-react';
 import GoalModal from './components/GoalModal';
 import ExportModal from './components/ExportModal';
 import SmartInsights from './components/SmartInsights';
@@ -173,6 +175,22 @@ export default function App() {
       return 35000;
     }
   });
+
+  // Active Navigation Tab: 'incomes' | 'withdrawals'
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      return localStorage.getItem('monthly_income_active_tab') || 'incomes';
+    } catch {
+      return 'incomes';
+    }
+  });
+
+  const handleSwitchTab = (tab) => {
+    setActiveTab(tab);
+    try {
+      localStorage.setItem('monthly_income_active_tab', tab);
+    } catch {}
+  };
 
   // Modals visibility
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -867,6 +885,10 @@ export default function App() {
         currentUser={currentUser}
         cloudUser={cloudUser}
         isSyncing={isSyncing}
+        activeTab={activeTab}
+        onSwitchTab={handleSwitchTab}
+        withdrawalsCount={currentMonthWithdrawals.length}
+        incomesCount={currentMonthIncomes.length}
         onOpenCloudSync={() => {
           if (cloudUser) {
             setIsAuthModalOpen(true);
@@ -880,113 +902,200 @@ export default function App() {
           setInitialJobIdForModal('');
           setIsIncomeModalOpen(true);
         }}
+        onOpenAddWithdrawal={() => {
+          setEditingWithdrawal(null);
+          setIsWithdrawalModalOpen(true);
+        }}
         onOpenExportModal={() => setIsExportModalOpen(true)}
       />
 
       {/* Main Content */}
       <main className="flex-1 max-w-[1550px] w-full mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-5 sm:py-8 animate-fade-in">
         
-        {/* KPI Stats Cards */}
-        <StatsCards
-          receivedTotal={receivedTotal}
-          pendingTotal={pendingTotal}
-          overallTotal={overallTotal}
-          totalWithdrawn={totalWithdrawn}
-          netRemaining={netRemaining}
-          withdrawalsCount={currentMonthWithdrawals.length}
-          onOpenWithdrawalModal={() => {
-            setEditingWithdrawal(null);
-            setIsWithdrawalModalOpen(true);
-          }}
-          monthlyGoal={monthlyGoal}
-          onOpenGoalModal={() => setIsGoalModalOpen(true)}
-          currency={currency}
-          categoryBreakdown={categoryBreakdown}
-          itemCount={itemCount}
-        />
+        {/* Top Page Navigation Tabs */}
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+          <div className="inline-flex p-1.5 bg-slate-200/70 dark:bg-slate-900/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner">
+            <button
+              type="button"
+              onClick={() => handleSwitchTab('incomes')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                activeTab === 'incomes'
+                  ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md shadow-slate-900/5 ring-1 ring-slate-900/5'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>الإيرادات والدخل</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === 'incomes'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
+                  : 'bg-slate-300/60 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+              }`}>
+                {currentMonthIncomes.length}
+              </span>
+            </button>
 
-        {/* Specialized Job Breakdown Cards (Company, Center, Online Students, Private Work) */}
-        <JobsSummaryCards
-          jobs={jobs}
-          currentMonthIncomes={currentMonthIncomes}
-          students={students}
-          currency={currency}
-          onOpenAddJob={() => {
-            setEditingJob(null);
-            setIsJobModalOpen(true);
-          }}
-          onEditJob={(job) => {
-            setEditingJob(job);
-            setIsJobModalOpen(true);
-          }}
-          onOpenStudentsModal={() => setIsStudentsModalOpen(true)}
-          onOpenAddIncomeWithJob={handleOpenAddIncomeWithJob}
-        />
-
-        {/* Withdrawals & Expenses Section for the month */}
-        <WithdrawalsList
-          withdrawals={currentMonthWithdrawals}
-          currency={currency}
-          onOpenAddWithdrawal={() => {
-            setEditingWithdrawal(null);
-            setIsWithdrawalModalOpen(true);
-          }}
-          onEditWithdrawal={(item) => {
-            setEditingWithdrawal(item);
-            setIsWithdrawalModalOpen(true);
-          }}
-          onDeleteWithdrawal={handleDeleteWithdrawal}
-          openConfirm={openConfirm}
-          showToast={showToast}
-        />
-
-        {/* Smart Financial Insights */}
-        <SmartInsights
-          receivedTotal={receivedTotal}
-          overallTotal={overallTotal}
-          incomes={currentMonthIncomes}
-          currency={currency}
-          categoryBreakdown={categoryBreakdown}
-        />
-
-        {/* Charts Section */}
-        <IncomeCharts
-          currentMonthIncomes={currentMonthIncomes}
-          monthlyTrendData={monthlyTrendData}
-          currency={currency}
-          categoryBreakdown={categoryBreakdown}
-        />
-
-        {/* Detailed Incomes Table */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              سجل مدفوعات وإيرادات شهر {currentMonthName}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              فلترة وتصفية حسب كل جهة عمل (شركة، سنتر، طلبة، شغل خاص)
-            </p>
+            <button
+              type="button"
+              onClick={() => handleSwitchTab('withdrawals')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+                activeTab === 'withdrawals'
+                  ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-md shadow-slate-900/5 ring-1 ring-slate-900/5'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <ArrowDownRight className="w-4 h-4" />
+              <span>المسحوبات والمصروفات</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === 'withdrawals'
+                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300'
+                  : 'bg-slate-300/60 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+              }`}>
+                {currentMonthWithdrawals.length}
+              </span>
+            </button>
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-            اضغط على علامة الحالة للتغيير الفوري بين (مستلم / معلق)
-          </span>
+
+          {/* Context CTA Button */}
+          {activeTab === 'incomes' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingIncome(null);
+                setInitialJobIdForModal('');
+                setIsIncomeModalOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>تسجيل دخل جديد</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingWithdrawal(null);
+                setIsWithdrawalModalOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-rose-500/20 active:scale-95 transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>تسجيل سحب جديد</span>
+            </button>
+          )}
         </div>
 
-        <IncomeTable
-          incomes={currentMonthIncomes}
-          jobs={jobs}
-          currency={currency}
-          onEditIncome={(income) => {
-            setEditingIncome(income);
-            setIsIncomeModalOpen(true);
-          }}
-          onDeleteIncome={handleDeleteIncome}
-          onToggleStatus={handleToggleStatus}
-          onOpenAddModal={() => {
-            setEditingIncome(null);
-            setIsIncomeModalOpen(true);
-          }}
-        />
+        {activeTab === 'incomes' ? (
+          <>
+            {/* KPI Stats Cards */}
+            <StatsCards
+              receivedTotal={receivedTotal}
+              pendingTotal={pendingTotal}
+              overallTotal={overallTotal}
+              totalWithdrawn={totalWithdrawn}
+              netRemaining={netRemaining}
+              withdrawalsCount={currentMonthWithdrawals.length}
+              onOpenWithdrawalModal={() => {
+                setEditingWithdrawal(null);
+                setIsWithdrawalModalOpen(true);
+              }}
+              onSwitchToWithdrawals={() => handleSwitchTab('withdrawals')}
+              monthlyGoal={monthlyGoal}
+              onOpenGoalModal={() => setIsGoalModalOpen(true)}
+              currency={currency}
+              categoryBreakdown={categoryBreakdown}
+              itemCount={itemCount}
+            />
+
+            {/* Specialized Job Breakdown Cards (Company, Center, Online Students, Private Work) */}
+            <JobsSummaryCards
+              jobs={jobs}
+              currentMonthIncomes={currentMonthIncomes}
+              students={students}
+              currency={currency}
+              onOpenAddJob={() => {
+                setEditingJob(null);
+                setIsJobModalOpen(true);
+              }}
+              onEditJob={(job) => {
+                setEditingJob(job);
+                setIsJobModalOpen(true);
+              }}
+              onOpenStudentsModal={() => setIsStudentsModalOpen(true)}
+              onOpenAddIncomeWithJob={handleOpenAddIncomeWithJob}
+            />
+
+            {/* Smart Financial Insights */}
+            <SmartInsights
+              receivedTotal={receivedTotal}
+              overallTotal={overallTotal}
+              incomes={currentMonthIncomes}
+              currency={currency}
+              categoryBreakdown={categoryBreakdown}
+            />
+
+            {/* Charts Section */}
+            <IncomeCharts
+              currentMonthIncomes={currentMonthIncomes}
+              monthlyTrendData={monthlyTrendData}
+              currency={currency}
+              categoryBreakdown={categoryBreakdown}
+            />
+
+            {/* Detailed Incomes Table */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                  سجل مدفوعات وإيرادات شهر {currentMonthName}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  فلترة وتصفية حسب كل جهة عمل (شركة، سنتر، طلبة، شغل خاص)
+                </p>
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                اضغط على علامة الحالة للتغيير الفوري بين (مستلم / معلق)
+              </span>
+            </div>
+
+            <IncomeTable
+              incomes={currentMonthIncomes}
+              jobs={jobs}
+              currency={currency}
+              onEditIncome={(income) => {
+                setEditingIncome(income);
+                setIsIncomeModalOpen(true);
+              }}
+              onDeleteIncome={handleDeleteIncome}
+              onToggleStatus={handleToggleStatus}
+              onOpenAddModal={() => {
+                setEditingIncome(null);
+                setIsIncomeModalOpen(true);
+              }}
+            />
+          </>
+        ) : (
+          /* Dedicated Withdrawals Page */
+          <WithdrawalsPage
+            withdrawals={currentMonthWithdrawals}
+            receivedTotal={receivedTotal}
+            netRemaining={netRemaining}
+            currentMonthName={currentMonthName}
+            selectedMonth={selectedMonth}
+            currency={currency}
+            onOpenAddWithdrawal={() => {
+              setEditingWithdrawal(null);
+              setIsWithdrawalModalOpen(true);
+            }}
+            onEditWithdrawal={(item) => {
+              setEditingWithdrawal(item);
+              setIsWithdrawalModalOpen(true);
+            }}
+            onDeleteWithdrawal={handleDeleteWithdrawal}
+            onSwitchToIncomes={() => handleSwitchTab('incomes')}
+            openConfirm={openConfirm}
+            showToast={showToast}
+          />
+        )}
 
       </main>
 

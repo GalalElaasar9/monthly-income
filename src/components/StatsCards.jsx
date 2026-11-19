@@ -22,6 +22,7 @@ export default function StatsCards({
   netRemaining = 0,
   withdrawalsCount = 0,
   onOpenWithdrawalModal,
+  onSwitchToWithdrawals,
   monthlyGoal,
   onOpenGoalModal,
   currency,
@@ -116,11 +117,17 @@ export default function StatsCards({
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
-            <span>عدد عمليات السحب:</span>
-            <span className="font-bold text-slate-700 dark:text-slate-300">
-              {withdrawalsCount} {withdrawalsCount === 1 ? 'عملية' : 'عمليات'}
-            </span>
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
+            <span>عدد عمليات السحب: <strong className="text-slate-700 dark:text-slate-300 font-bold">{withdrawalsCount} {withdrawalsCount === 1 ? 'عملية' : 'عمليات'}</strong></span>
+            {onSwitchToWithdrawals && (
+              <button
+                type="button"
+                onClick={onSwitchToWithdrawals}
+                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 active:scale-95"
+              >
+                <span>عرض صفحة المسحوبات ⬅️</span>
+              </button>
+            )}
           </div>
         </div>
 

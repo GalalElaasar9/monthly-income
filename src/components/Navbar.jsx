@@ -13,7 +13,8 @@ import {
   User,
   Layers,
   Cloud,
-  RefreshCw
+  RefreshCw,
+  ArrowDownRight
 } from 'lucide-react';
 import { ARABIC_MONTHS } from '../constants';
 
@@ -25,9 +26,14 @@ export default function Navbar({
   currentUser,
   cloudUser,
   isSyncing = false,
+  activeTab = 'incomes',
+  onSwitchTab,
+  withdrawalsCount = 0,
+  incomesCount = 0,
   onOpenCloudSync,
   onOpenAuthModal,
   onOpenAddModal,
+  onOpenAddWithdrawal,
   onOpenExportModal
 }) {
   const [yearStr, monthStr] = selectedMonth.split('-');
@@ -128,14 +134,24 @@ export default function Navbar({
           {/* Desktop & Tablet Actions (Hidden on Mobile < sm) */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 shrink-0">
             
-            {/* Primary Action Button: Add Income */}
-            <button
-              onClick={onOpenAddModal}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all duration-200 transform active:scale-95 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>تسجيل دخل</span>
-            </button>
+            {/* Primary Action Button: Context-aware (Income or Withdrawal) */}
+            {activeTab === 'withdrawals' ? (
+              <button
+                onClick={onOpenAddWithdrawal}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md shadow-rose-500/20 hover:shadow-lg transition-all duration-200 transform active:scale-95 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>تسجيل سحب</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAddModal}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all duration-200 transform active:scale-95 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>تسجيل دخل</span>
+              </button>
+            )}
 
             {/* Cloud Auto-Sync Indicator & Button */}
             <button
@@ -281,14 +297,24 @@ export default function Navbar({
           {/* Mobile Actions: Only Primary CTA + Hamburger Bars (Ultra Clean & Spacious) */}
           <div className="flex sm:hidden items-center gap-2 shrink-0">
             
-            {/* Quick Add Income CTA */}
-            <button
-              onClick={onOpenAddModal}
-              className="flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>دخل</span>
-            </button>
+            {/* Quick Context CTA */}
+            {activeTab === 'withdrawals' ? (
+              <button
+                onClick={onOpenAddWithdrawal}
+                className="flex items-center gap-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-md shadow-rose-500/20 active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>سحب</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAddModal}
+                className="flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>دخل</span>
+              </button>
+            )}
 
             {/* Quick Cloud Sync CTA */}
             <button
@@ -328,6 +354,46 @@ export default function Navbar({
                   ref={mobileMenuRef}
                   className="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200 space-y-1.5"
                 >
+                  {/* Page Navigation Tabs in Mobile */}
+                  <div className="p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl flex gap-1 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (onSwitchTab) onSwitchTab('incomes');
+                      }}
+                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                        activeTab === 'incomes'
+                          ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <Wallet className="w-3.5 h-3.5" />
+                      <span>الإيرادات</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (onSwitchTab) onSwitchTab('withdrawals');
+                      }}
+                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                        activeTab === 'withdrawals'
+                          ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <ArrowDownRight className="w-3.5 h-3.5" />
+                      <span>المسحوبات</span>
+                      {withdrawalsCount > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold">
+                          {withdrawalsCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
                   {/* Active Month Item (Opens Calendar Picker) */}
                   <button
                     onClick={() => {
