@@ -163,10 +163,23 @@ export default function AuthModal({
           </div>
         </div>
 
+        {/* Auto Sync Banner */}
+        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="text-xs">
+            <span className="font-bold block">المزامنة التلقائية مفعلة ⚡</span>
+            <span className="text-[11px] opacity-80 block">
+              أي عملية تسجيل أو تعديل تقوم بها على أي جهاز تُحفظ وتظهر فوراً على هاتفك وباقي أجهزتك تلقائياً دون أي تدخل منك.
+            </span>
+          </div>
+        </div>
+
         {/* Cloud Sync Actions */}
         <div className="space-y-3 pt-1">
           <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-            <span>أزرار المزامنة الفورية:</span>
+            <span>أدوات المزامنة الاحتياطية (اختياري):</span>
             {isSyncing && (
               <span className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
                 <RefreshCw className="w-3 h-3 animate-spin" />

@@ -226,13 +226,29 @@ export default function App() {
     if (!auth) return;
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setCloudUser(user);
+      if (user) {
+        setCurrentUser((prev) => {
+          const updated = prev || {
+            name: user.displayName || user.email?.split('@')[0] || 'مستخدم',
+            email: user.email,
+            role: 'مستخدم سحابي',
+            avatar: (user.displayName || user.email || 'م').charAt(0).toUpperCase(),
+            uid: user.uid,
+            isCloud: true
+          };
+          try {
+            localStorage.setItem('monthly_income_user', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
+      }
     });
     return () => unsubscribeAuth();
   }, []);
 
   const [isInitialCloudLoaded, setIsInitialCloudLoaded] = useState(false);
 
-  // 1. Initial Cloud Sync & Realtime Subscription
+  // 1. 100% Automatic Background Cloud Sync & Realtime Subscription
   useEffect(() => {
     if (!cloudUser) {
       setIsInitialCloudLoaded(false);
@@ -241,13 +257,38 @@ export default function App() {
 
     let isMounted = true;
 
-    const runInitialSync = async () => {
+    const runAutomaticInitialSync = async () => {
       setIsSyncing(true);
       try {
+        // Read directly from localStorage to ensure we never miss unsynced local data
+        let localIncomes = incomes;
+        let localStudents = students;
+        let localWithdrawals = withdrawals;
+        let localJobs = jobs;
+        let localGoal = monthlyGoal;
+
+        try {
+          const savedInc = localStorage.getItem('monthly_income_data');
+          if (savedInc) {
+            const parsed = JSON.parse(savedInc);
+            if (Array.isArray(parsed) && parsed.length > localIncomes.length) localIncomes = parsed;
+          }
+          const savedStd = localStorage.getItem('monthly_income_students');
+          if (savedStd) {
+            const parsed = JSON.parse(savedStd);
+            if (Array.isArray(parsed) && parsed.length > localStudents.length) localStudents = parsed;
+          }
+          const savedWtd = localStorage.getItem('monthly_income_withdrawals');
+          if (savedWtd) {
+            const parsed = JSON.parse(savedWtd);
+            if (Array.isArray(parsed) && parsed.length > localWithdrawals.length) localWithdrawals = parsed;
+          }
+        } catch (e) {}
+
         const cloudData = await fetchUserDataFromCloud(cloudUser.uid);
         if (!isMounted) return;
 
-        const hasLocalData = incomes.length > 0 || students.length > 0 || withdrawals.length > 0;
+        const hasLocalData = localIncomes.length > 0 || localStudents.length > 0 || localWithdrawals.length > 0;
         const hasRemoteData = cloudData && (
           (Array.isArray(cloudData.incomes) && cloudData.incomes.length > 0) ||
           (Array.isArray(cloudData.students) && cloudData.students.length > 0) ||
@@ -255,12 +296,12 @@ export default function App() {
         );
 
         if (hasRemoteData) {
-          // Cloud has data! Merge or load cloud data safely
-          const mergedIncomes = mergeRecordsById(incomes, cloudData.incomes);
-          const mergedStudents = mergeRecordsById(students, cloudData.students);
-          const mergedWithdrawals = mergeRecordsById(withdrawals, cloudData.withdrawals);
-          const mergedJobs = (cloudData.jobs && cloudData.jobs.length > 0) ? cloudData.jobs : jobs;
-          const mergedGoal = cloudData.monthlyGoal || monthlyGoal;
+          // Cloud already has data! Merge local with remote safely
+          const mergedIncomes = mergeRecordsById(cloudData.incomes, localIncomes);
+          const mergedStudents = mergeRecordsById(cloudData.students, localStudents);
+          const mergedWithdrawals = mergeRecordsById(cloudData.withdrawals, localWithdrawals);
+          const mergedJobs = (cloudData.jobs && cloudData.jobs.length > 0) ? cloudData.jobs : localJobs;
+          const mergedGoal = cloudData.monthlyGoal || localGoal;
 
           setIncomes(mergedIncomes);
           setStudents(mergedStudents);
@@ -274,10 +315,10 @@ export default function App() {
           localStorage.setItem('monthly_income_jobs', JSON.stringify(mergedJobs));
           localStorage.setItem('monthly_income_goal', String(mergedGoal));
 
-          // If this device had new records not yet in cloud, push the merged dataset to cloud
-          const hasLocalExtras = (incomes.length > (cloudData.incomes?.length || 0)) ||
-                                 (students.length > (cloudData.students?.length || 0)) ||
-                                 (withdrawals.length > (cloudData.withdrawals?.length || 0));
+          // If this device had new records not yet in cloud, auto-push merged set to cloud in background
+          const hasLocalExtras = (mergedIncomes.length > (cloudData.incomes?.length || 0)) ||
+                                 (mergedStudents.length > (cloudData.students?.length || 0)) ||
+                                 (mergedWithdrawals.length > (cloudData.withdrawals?.length || 0));
           if (hasLocalExtras) {
             await syncUserDataToCloud(cloudUser.uid, {
               incomes: mergedIncomes,
@@ -288,22 +329,19 @@ export default function App() {
               currency: currency.code
             });
           }
-
-          showToast(`تم استرجاع ومزامنة البيانات من السحابة بنجاح (${mergedIncomes.length} إيراد، ${mergedStudents.length} طالب) ☁️`, 'success');
         } else if (hasLocalData) {
-          // Cloud is empty, but this device has local data! Push to cloud so other devices get it
+          // Cloud is empty, but this device has local data! Auto-upload to cloud in background
           await syncUserDataToCloud(cloudUser.uid, {
-            incomes,
-            jobs,
-            students,
-            withdrawals,
-            monthlyGoal,
+            incomes: localIncomes,
+            jobs: localJobs,
+            students: localStudents,
+            withdrawals: localWithdrawals,
+            monthlyGoal: localGoal,
             currency: currency.code
           });
-          showToast(`تم رفع بيانات هذا الجهاز بنجاح إلى السحابة (${incomes.length} إيراد) ☁️`, 'success');
         }
       } catch (err) {
-        console.warn('Initial cloud sync error:', err);
+        console.warn('Auto cloud sync on mount:', err);
       } finally {
         if (isMounted) {
           setIsSyncing(false);
@@ -312,31 +350,22 @@ export default function App() {
       }
     };
 
-    runInitialSync();
+    runAutomaticInitialSync();
 
     // 2. Real-time Subscription to listen for changes from other tabs/devices
     const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
-      if (!cloudData) return;
-      if (Array.isArray(cloudData.incomes) && cloudData.incomes.length > 0) {
-        setIncomes((prev) => {
-          const merged = mergeRecordsById(prev, cloudData.incomes);
-          localStorage.setItem('monthly_income_data', JSON.stringify(merged));
-          return merged;
-        });
+      if (!isMounted || !cloudData) return;
+      if (Array.isArray(cloudData.incomes)) {
+        setIncomes(cloudData.incomes);
+        localStorage.setItem('monthly_income_data', JSON.stringify(cloudData.incomes));
       }
-      if (Array.isArray(cloudData.students) && cloudData.students.length > 0) {
-        setStudents((prev) => {
-          const merged = mergeRecordsById(prev, cloudData.students);
-          localStorage.setItem('monthly_income_students', JSON.stringify(merged));
-          return merged;
-        });
+      if (Array.isArray(cloudData.students)) {
+        setStudents(cloudData.students);
+        localStorage.setItem('monthly_income_students', JSON.stringify(cloudData.students));
       }
-      if (Array.isArray(cloudData.withdrawals) && cloudData.withdrawals.length > 0) {
-        setWithdrawals((prev) => {
-          const merged = mergeRecordsById(prev, cloudData.withdrawals);
-          localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
-          return merged;
-        });
+      if (Array.isArray(cloudData.withdrawals)) {
+        setWithdrawals(cloudData.withdrawals);
+        localStorage.setItem('monthly_income_withdrawals', JSON.stringify(cloudData.withdrawals));
       }
       if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
         setJobs(cloudData.jobs);
