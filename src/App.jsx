@@ -35,19 +35,20 @@ import {
   DEFAULT_CURRENCY,
   CURRENCIES,
   CATEGORIES,
-  ARABIC_MONTHS
+  ARABIC_MONTHS,
+  normalizeDateString
 } from './constants';
 
 // Helper to merge local & remote records without losing local unsynced data
-const mergeRecordsById = (localArr = [], remoteArr = []) => {
+const mergeRecordsById = (baseArr = [], priorityArr = [], deletedIds = new Set()) => {
   const map = new Map();
-  // 1. Remote items first
-  (remoteArr || []).forEach((item) => {
-    if (item && item.id) map.set(item.id, item);
+  // 1. Base items
+  (baseArr || []).forEach((item) => {
+    if (item && item.id && !deletedIds.has(item.id)) map.set(item.id, item);
   });
-  // 2. Local items take priority so newly added items are never erased
-  (localArr || []).forEach((item) => {
-    if (item && item.id) map.set(item.id, item);
+  // 2. Priority items take precedence
+  (priorityArr || []).forEach((item) => {
+    if (item && item.id && !deletedIds.has(item.id)) map.set(item.id, item);
   });
   return Array.from(map.values());
 };
@@ -92,6 +93,23 @@ export default function App() {
 
   const [cloudUser, setCloudUser] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [deletedIds, setDeletedIds] = useState(() => new Set());
+
+  // Cloud sync catch helper with informative, user-friendly warnings
+  const handleCloudSyncCatch = (err) => {
+    console.warn('Cloud sync error:', err);
+    if (err?.code === 'resource-exhausted') {
+      showToast(
+        'تم حفظ بياناتك محلياً بنجاح ✅ (تم الوصول للحد الأقصى اليومي لـ Firebase Spark، وستكتمل المزامنة السحابية تلقائياً عند تجدد الحصة)',
+        'warning'
+      );
+    } else if (err?.code === 'permission-denied') {
+      showToast(
+        'تم الحفظ محلياً على جهازك. تنبيه: صلاحية السحابة غير مكتملة، يرجى تسجيل الدخول مجدداً.',
+        'warning'
+      );
+    }
+  };
 
   // 4. Incomes State - 100% Clean, zero dummy records
   const [incomes, setIncomes] = useState(() => {
@@ -315,9 +333,9 @@ export default function App() {
 
         if (hasRemoteData) {
           // Cloud already has data! Merge local with remote safely
-          const mergedIncomes = mergeRecordsById(cloudData.incomes, localIncomes);
-          const mergedStudents = mergeRecordsById(cloudData.students, localStudents);
-          const mergedWithdrawals = mergeRecordsById(cloudData.withdrawals, localWithdrawals);
+          const mergedIncomes = mergeRecordsById(cloudData.incomes, localIncomes, deletedIds);
+          const mergedStudents = mergeRecordsById(cloudData.students, localStudents, deletedIds);
+          const mergedWithdrawals = mergeRecordsById(cloudData.withdrawals, localWithdrawals, deletedIds);
           const mergedJobs = (cloudData.jobs && cloudData.jobs.length > 0) ? cloudData.jobs : localJobs;
           const mergedGoal = cloudData.monthlyGoal || localGoal;
 
@@ -373,25 +391,46 @@ export default function App() {
     // 2. Real-time Subscription to listen for changes from other tabs/devices
     const unsubscribeDoc = subscribeToCloudData(cloudUser.uid, (cloudData) => {
       if (!isMounted || !cloudData) return;
+      
+      // Merge remote updates with current local records so pending/offline local records are never erased
       if (Array.isArray(cloudData.incomes)) {
-        setIncomes(cloudData.incomes);
-        localStorage.setItem('monthly_income_data', JSON.stringify(cloudData.incomes));
+        setIncomes((currentLocal) => {
+          const merged = mergeRecordsById(cloudData.incomes, currentLocal, deletedIds);
+          try {
+            localStorage.setItem('monthly_income_data', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
       }
       if (Array.isArray(cloudData.students)) {
-        setStudents(cloudData.students);
-        localStorage.setItem('monthly_income_students', JSON.stringify(cloudData.students));
+        setStudents((currentLocal) => {
+          const merged = mergeRecordsById(cloudData.students, currentLocal, deletedIds);
+          try {
+            localStorage.setItem('monthly_income_students', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
       }
       if (Array.isArray(cloudData.withdrawals)) {
-        setWithdrawals(cloudData.withdrawals);
-        localStorage.setItem('monthly_income_withdrawals', JSON.stringify(cloudData.withdrawals));
+        setWithdrawals((currentLocal) => {
+          const merged = mergeRecordsById(cloudData.withdrawals, currentLocal, deletedIds);
+          try {
+            localStorage.setItem('monthly_income_withdrawals', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
       }
       if (Array.isArray(cloudData.jobs) && cloudData.jobs.length > 0) {
         setJobs(cloudData.jobs);
-        localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+        try {
+          localStorage.setItem('monthly_income_jobs', JSON.stringify(cloudData.jobs));
+        } catch (e) {}
       }
       if (cloudData.monthlyGoal) {
         setMonthlyGoal(cloudData.monthlyGoal);
-        localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+        try {
+          localStorage.setItem('monthly_income_goal', String(cloudData.monthlyGoal));
+        } catch (e) {}
       }
     });
 
@@ -512,7 +551,12 @@ export default function App() {
 
   // Calculations for selected month
   const currentMonthIncomes = useMemo(() => {
-    return incomes.filter((item) => item.date && item.date.startsWith(selectedMonth));
+    const normSelected = normalizeDateString(selectedMonth);
+    return incomes.filter((item) => {
+      if (!item || !item.date) return false;
+      const normDate = normalizeDateString(item.date);
+      return normDate.startsWith(normSelected);
+    });
   }, [incomes, selectedMonth]);
 
   const receivedTotal = useMemo(() => {
@@ -531,7 +575,12 @@ export default function App() {
 
   // Withdrawals Calculations for selected month
   const currentMonthWithdrawals = useMemo(() => {
-    return withdrawals.filter((w) => w.date && w.date.startsWith(selectedMonth));
+    const normSelected = normalizeDateString(selectedMonth);
+    return withdrawals.filter((w) => {
+      if (!w || !w.date) return false;
+      const normDate = normalizeDateString(w.date);
+      return normDate.startsWith(normSelected);
+    });
   }, [withdrawals, selectedMonth]);
 
   const totalWithdrawn = useMemo(() => {
@@ -604,9 +653,15 @@ export default function App() {
 
   // Income Operations
   const handleSaveIncome = (incomeData) => {
+    const safeDate = normalizeDateString(incomeData.date) || new Date().toISOString().split('T')[0];
+    const safeItem = {
+      ...incomeData,
+      date: safeDate
+    };
+
     // If the record belongs to another month, switch to it so the user sees it immediately
-    if (incomeData.date && incomeData.date.length >= 7) {
-      const itemMonth = incomeData.date.slice(0, 7);
+    if (safeDate.length >= 7) {
+      const itemMonth = safeDate.slice(0, 7);
       if (itemMonth !== selectedMonth) {
         setSelectedMonth(itemMonth);
       }
@@ -614,13 +669,13 @@ export default function App() {
 
     let updatedList;
     setIncomes((prev) => {
-      const existingIndex = prev.findIndex((i) => i.id === incomeData.id);
+      const existingIndex = prev.findIndex((i) => i.id === safeItem.id);
       let updated;
       if (existingIndex >= 0) {
         updated = [...prev];
-        updated[existingIndex] = incomeData;
+        updated[existingIndex] = safeItem;
       } else {
-        updated = [incomeData, ...prev];
+        updated = [safeItem, ...prev];
       }
       updatedList = updated;
       try {
@@ -630,7 +685,7 @@ export default function App() {
     });
 
     if (cloudUser && updatedList) {
-      syncUserDataToCloud(cloudUser.uid, { incomes: updatedList }).catch((err) => console.warn(err));
+      syncUserDataToCloud(cloudUser.uid, { incomes: updatedList }).catch(handleCloudSyncCatch);
     }
 
     showToast(editingIncome ? 'تم حفظ التعديلات بنجاح' : 'تم تسجيل الدخل الجديد بنجاح!', 'success');
@@ -644,13 +699,14 @@ export default function App() {
       confirmText: 'نعم، حذف',
       isDanger: true,
       onConfirm: () => {
+        setDeletedIds((prev) => new Set([...prev, id]));
         const updated = incomes.filter((i) => i.id !== id);
         setIncomes(updated);
         try {
           localStorage.setItem('monthly_income_data', JSON.stringify(updated));
         } catch (e) {}
         if (cloudUser) {
-          syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(() => {});
+          syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(handleCloudSyncCatch);
         }
         showToast('تم حذف البند بنجاح', 'info');
       }
@@ -676,7 +732,7 @@ export default function App() {
     } catch (e) {}
 
     if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(() => {});
+      syncUserDataToCloud(cloudUser.uid, { incomes: updated }).catch(handleCloudSyncCatch);
     }
 
     if (nextToastText) showToast(nextToastText, 'info');
@@ -684,6 +740,7 @@ export default function App() {
 
   // Student Operations
   const handleSaveStudent = (studentData) => {
+    let updatedList;
     setStudents((prev) => {
       const index = prev.findIndex((s) => s.id === studentData.id);
       let updated;
@@ -693,24 +750,27 @@ export default function App() {
       } else {
         updated = [...prev, studentData];
       }
+      updatedList = updated;
       try {
         localStorage.setItem('monthly_income_students', JSON.stringify(updated));
       } catch (e) {}
-      if (cloudUser) {
-        syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(() => {});
-      }
       return updated;
     });
+
+    if (cloudUser && updatedList) {
+      syncUserDataToCloud(cloudUser.uid, { students: updatedList }).catch(handleCloudSyncCatch);
+    }
   };
 
   const handleDeleteStudent = (id) => {
+    setDeletedIds((prev) => new Set([...prev, id]));
     const updated = students.filter((s) => s.id !== id);
     setStudents(updated);
     try {
       localStorage.setItem('monthly_income_students', JSON.stringify(updated));
     } catch (e) {}
     if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(() => {});
+      syncUserDataToCloud(cloudUser.uid, { students: updated }).catch(handleCloudSyncCatch);
     }
     showToast('تم حذف الطالب بنجاح', 'info');
   };
@@ -745,12 +805,13 @@ export default function App() {
     if (cloudUser && updatedList) {
       syncUserDataToCloud(cloudUser.uid, {
         incomes: updatedList
-      }).catch((err) => console.warn(err));
+      }).catch(handleCloudSyncCatch);
     }
   };
 
   // Job Operations
   const handleSaveJob = (jobData) => {
+    let updatedList;
     setJobs((prev) => {
       const index = prev.findIndex((j) => j.id === jobData.id);
       let updated;
@@ -760,43 +821,55 @@ export default function App() {
       } else {
         updated = [...prev, jobData];
       }
+      updatedList = updated;
       try {
         localStorage.setItem('monthly_income_jobs', JSON.stringify(updated));
       } catch (e) {}
-      if (cloudUser) {
-        syncUserDataToCloud(cloudUser.uid, { jobs: updated }).catch(() => {});
-      }
       return updated;
     });
+
+    if (cloudUser && updatedList) {
+      syncUserDataToCloud(cloudUser.uid, { jobs: updatedList }).catch(handleCloudSyncCatch);
+    }
   };
 
   // Withdrawal Operations (سحب المبالغ والمصروفات)
   const handleSaveWithdrawal = (withdrawalData) => {
+    const safeDate = normalizeDateString(withdrawalData.date) || new Date().toISOString().split('T')[0];
+    const safeItem = {
+      ...withdrawalData,
+      date: safeDate
+    };
+
     // If the withdrawal belongs to another month, switch to it so the user sees it immediately
-    if (withdrawalData.date && withdrawalData.date.length >= 7) {
-      const itemMonth = withdrawalData.date.slice(0, 7);
+    if (safeDate.length >= 7) {
+      const itemMonth = safeDate.slice(0, 7);
       if (itemMonth !== selectedMonth) {
         setSelectedMonth(itemMonth);
       }
     }
 
+    let updatedList;
     setWithdrawals((prev) => {
-      const existingIndex = prev.findIndex((w) => w.id === withdrawalData.id);
+      const existingIndex = prev.findIndex((w) => w.id === safeItem.id);
       let updated;
       if (existingIndex >= 0) {
         updated = [...prev];
-        updated[existingIndex] = withdrawalData;
+        updated[existingIndex] = safeItem;
       } else {
-        updated = [withdrawalData, ...prev];
+        updated = [safeItem, ...prev];
       }
+      updatedList = updated;
       try {
         localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
       } catch (e) {}
-      if (cloudUser) {
-        syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(() => {});
-      }
       return updated;
     });
+
+    if (cloudUser && updatedList) {
+      syncUserDataToCloud(cloudUser.uid, { withdrawals: updatedList }).catch(handleCloudSyncCatch);
+    }
+
     setIsWithdrawalModalOpen(false);
     showToast(
       editingWithdrawal ? 'تم حفظ تعديلات عملية السحب بنجاح' : 'تم تسجيل عملية السحب بنجاح!',
@@ -805,13 +878,14 @@ export default function App() {
   };
 
   const handleDeleteWithdrawal = (id) => {
+    setDeletedIds((prev) => new Set([...prev, id]));
     const updated = withdrawals.filter((w) => w.id !== id);
     setWithdrawals(updated);
     try {
       localStorage.setItem('monthly_income_withdrawals', JSON.stringify(updated));
     } catch (e) {}
     if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(() => {});
+      syncUserDataToCloud(cloudUser.uid, { withdrawals: updated }).catch(handleCloudSyncCatch);
     }
     showToast('تم حذف عملية السحب بنجاح', 'info');
   };

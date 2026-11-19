@@ -47,15 +47,27 @@ export const isFirebaseConfigured = () => {
   return !!(auth && db);
 };
 
+// Recursively sanitizes an object for Firestore by converting any undefined to null
+export const sanitizeForFirestore = (obj) => {
+  if (obj === undefined) return null;
+  return JSON.parse(
+    JSON.stringify(obj, (key, value) => {
+      if (value === undefined) return null;
+      return value;
+    })
+  );
+};
+
 // Cloud Sync Helpers
 export const syncUserDataToCloud = async (uid, data) => {
   if (!db || !uid) return false;
   try {
+    const cleanData = sanitizeForFirestore(data);
     const userDocRef = doc(db, 'users', uid);
     await setDoc(
       userDocRef,
       {
-        ...data,
+        ...cleanData,
         lastUpdated: serverTimestamp()
       },
       { merge: true }

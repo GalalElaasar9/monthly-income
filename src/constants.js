@@ -110,4 +110,19 @@ export const parseNumberInput = (value) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+// Normalizes dates from any locale (Arabic numerals, slashes) to YYYY-MM-DD
+export const normalizeDateString = (dateStr) => {
+  if (!dateStr) return '';
+  const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  const persianNumerals = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  let cleaned = String(dateStr).trim();
+  for (let i = 0; i < 10; i++) {
+    cleaned = cleaned.replaceAll(arabicNumerals[i], String(i));
+    cleaned = cleaned.replaceAll(persianNumerals[i], String(i));
+  }
+  cleaned = cleaned.replace(/\//g, '-');
+  return cleaned;
+};
+
+
 

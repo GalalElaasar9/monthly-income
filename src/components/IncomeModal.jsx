@@ -184,17 +184,17 @@ export default function IncomeModal({
 
     onSave({
       id: editingIncome ? editingIncome.id : `inc-${Date.now()}`,
-      jobId: selectedJobId,
-      studentId: isStudentJob ? selectedStudentId : null,
+      jobId: selectedJobId || 'job-company',
+      studentId: isStudentJob && selectedStudentId ? selectedStudentId : null,
       studentName: isStudentJob && studentObj ? studentObj.name : null,
       title: title.trim(),
       amount: parsedAmount,
-      category,
-      date,
-      status,
-      isRecurring,
-      client: client.trim(),
-      notes: notes.trim(),
+      category: category || 'salary',
+      date: date || new Date().toISOString().split('T')[0],
+      status: status || 'received',
+      isRecurring: Boolean(isRecurring),
+      client: client ? client.trim() : '',
+      notes: notes ? notes.trim() : '',
     });
 
     onClose();

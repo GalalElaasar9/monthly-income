@@ -160,14 +160,23 @@ export default function JobsSummaryCards({
                 <div className="my-2">
                   <div className="flex items-baseline gap-1.5 flex-wrap">
                     <span className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                      {job.received.toLocaleString('ar-EG')}
+                      {job.received > 0
+                        ? job.received.toLocaleString('ar-EG')
+                        : job.pending > 0
+                        ? job.pending.toLocaleString('ar-EG')
+                        : '0'}
                     </span>
                     <span className="text-xs font-semibold text-slate-400">
                       {currency.symbol}
                     </span>
-                    {job.pending > 0 && (
+                    {job.pending > 0 && job.received > 0 && (
                       <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
                         (+{job.pending.toLocaleString('ar-EG')} معلق)
+                      </span>
+                    )}
+                    {job.received === 0 && job.pending > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 font-bold">
+                        معلق
                       </span>
                     )}
                   </div>
