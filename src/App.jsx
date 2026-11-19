@@ -612,6 +612,7 @@ export default function App() {
       }
     }
 
+    let updatedList;
     setIncomes((prev) => {
       const existingIndex = prev.findIndex((i) => i.id === incomeData.id);
       let updated;
@@ -621,16 +622,15 @@ export default function App() {
       } else {
         updated = [incomeData, ...prev];
       }
+      updatedList = updated;
       try {
         localStorage.setItem('monthly_income_data', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
 
-    if (cloudUser) {
-      syncUserDataToCloud(cloudUser.uid, {
-        incomes: [incomeData, ...incomes.filter((i) => i.id !== incomeData.id)]
-      }).catch(() => {});
+    if (cloudUser && updatedList) {
+      syncUserDataToCloud(cloudUser.uid, { incomes: updatedList }).catch((err) => console.warn(err));
     }
 
     showToast(editingIncome ? 'تم حفظ التعديلات بنجاح' : 'تم تسجيل الدخل الجديد بنجاح!', 'success');
@@ -732,18 +732,20 @@ export default function App() {
       notes: `تم السداد لمرحلة ${student.grade}`
     };
 
+    let updatedList;
     setIncomes((prev) => {
       const updated = [newIncome, ...prev];
+      updatedList = updated;
       try {
         localStorage.setItem('monthly_income_data', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
 
-    if (cloudUser) {
+    if (cloudUser && updatedList) {
       syncUserDataToCloud(cloudUser.uid, {
-        incomes: [newIncome, ...incomes]
-      }).catch(() => {});
+        incomes: updatedList
+      }).catch((err) => console.warn(err));
     }
   };
 
