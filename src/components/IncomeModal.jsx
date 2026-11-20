@@ -83,11 +83,11 @@ export default function IncomeModal({
         setTitle('اشتراك طالب أونلاين');
         setAmount('');
         setClient('');
-      } else if (foundJob && (foundJob.id === 'job-center' || cat === 'center')) {
+      } else if (foundJob && foundJob.id === 'job-center') {
         setTitle(`مستحقات السنتر - ${currentMonthName}`);
         setAmount(foundJob.defaultAmount > 0 ? String(foundJob.defaultAmount) : '');
         setClient('');
-      } else if (foundJob && (foundJob.id === 'job-private' || cat === 'private')) {
+      } else if (foundJob && foundJob.id === 'job-private') {
         setTitle(`مشروع فريلانس - ${currentMonthName}`);
         setAmount(foundJob.defaultAmount > 0 ? String(foundJob.defaultAmount) : '');
         setClient('');
@@ -123,12 +123,12 @@ export default function IncomeModal({
       setTitle('اشتراك طالب');
       setAmount('');
       setClient('');
-    } else if (job.id === 'job-center' || cat === 'center') {
+    } else if (job.id === 'job-center') {
       setSelectedStudentId('');
       setTitle(`مستحقات السنتر - ${currentMonthName}`);
       if (amount === '15000') setAmount('');
       if (client === 'وظيفة الشركة') setClient('');
-    } else if (job.id === 'job-private' || cat === 'private') {
+    } else if (job.id === 'job-private') {
       setSelectedStudentId('');
       setTitle(`مشروع فريلانس - ${currentMonthName}`);
       if (amount === '15000' || amount === '2000') setAmount('');
@@ -142,6 +142,7 @@ export default function IncomeModal({
       setSelectedStudentId('');
       setTitle(`${job.title} - ${currentMonthName}`);
       if (job.defaultAmount > 0) setAmount(String(job.defaultAmount));
+      if (!client) setClient(job.title);
     }
   };
 

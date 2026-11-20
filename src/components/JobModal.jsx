@@ -47,8 +47,10 @@ export default function JobModal({
     let resolvedCategory = editingJob?.category;
     if (!resolvedCategory) {
       if (type === 'students') resolvedCategory = 'students';
-      else if (type === 'variable') resolvedCategory = 'private';
-      else if (title.includes('سنتر') || title.includes('أكاديمية')) resolvedCategory = 'center';
+      else if (type === 'variable' || title.includes('خاص') || title.includes('فريلانس') || title.includes('مشروع')) resolvedCategory = 'private';
+      else if (title.includes('سنتر') || title.includes('أكاديمية') || title.includes('تدريب')) resolvedCategory = 'center';
+      else if (title.includes('استثمار') || title.includes('أرباح')) resolvedCategory = 'investments';
+      else if (title.includes('مكافأ') || title.includes('بونص')) resolvedCategory = 'bonus';
       else resolvedCategory = 'salary';
     }
 

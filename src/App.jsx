@@ -869,6 +869,7 @@ export default function App() {
 
   // Job Operations
   const handleSaveJob = (jobData) => {
+    let isNew = false;
     let updatedList;
     setJobs((prev) => {
       const index = prev.findIndex((j) => j.id === jobData.id);
@@ -877,6 +878,7 @@ export default function App() {
         updated = [...prev];
         updated[index] = jobData;
       } else {
+        isNew = true;
         updated = [...prev, jobData];
       }
       updatedList = updated;
@@ -888,6 +890,32 @@ export default function App() {
 
     if (updatedList) {
       syncToAllBackends({ jobs: updatedList });
+    }
+
+    // If new job created with default amount > 0, create its initial income record for the current month!
+    if (isNew && jobData.defaultAmount > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const incomeDate = today.startsWith(selectedMonth) ? today : `${selectedMonth}-01`;
+      const newIncome = {
+        id: `inc-${Date.now()}`,
+        title: `${jobData.title} - ${currentMonthName}`,
+        amount: Number(jobData.defaultAmount),
+        category: jobData.category || 'salary',
+        jobId: jobData.id,
+        date: incomeDate,
+        status: 'pending',
+        client: jobData.title,
+        notes: jobData.description || 'دخل مسجل لجهة العمل'
+      };
+
+      setIncomes((prev) => {
+        const updatedIncomes = [newIncome, ...prev];
+        try {
+          localStorage.setItem('monthly_income_data', JSON.stringify(updatedIncomes));
+        } catch (e) {}
+        syncToAllBackends({ incomes: updatedIncomes });
+        return updatedIncomes;
+      });
     }
   };
 

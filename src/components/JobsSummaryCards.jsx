@@ -28,12 +28,26 @@ export default function JobsSummaryCards({
   // Compute total for each job in the selected month
   const jobStats = jobs.map((job) => {
     const jobIncomes = currentMonthIncomes.filter((inc) => {
-      if (inc.jobId && inc.jobId === job.id) return true;
-      if (inc.category && inc.category === job.category) return true;
-      if (job.id === 'job-center' && (inc.title?.includes('سنتر') || inc.client?.includes('سنتر') || inc.category === 'center')) return true;
-      if (job.id === 'job-private' && (inc.title?.includes('فريلانس') || inc.title?.includes('خاص') || inc.category === 'private')) return true;
-      if (job.id === 'job-company' && (inc.title?.includes('شركة') || inc.category === 'salary')) return true;
-      if (job.id === 'job-online' && (inc.studentId || inc.studentName || inc.category === 'students')) return true;
+      // 1. If income has an explicit jobId, strictly match it to job.id
+      if (inc.jobId) {
+        return inc.jobId === job.id;
+      }
+
+      // 2. Legacy fallback ONLY for the 4 default built-in jobs if inc.jobId is missing
+      if (job.id === 'job-company') {
+        return inc.category === 'salary' || inc.title?.includes('شركة');
+      }
+      if (job.id === 'job-center') {
+        return inc.category === 'center' || inc.title?.includes('سنتر') || inc.client?.includes('سنتر');
+      }
+      if (job.id === 'job-private') {
+        return inc.category === 'private' || inc.title?.includes('فريلانس') || inc.title?.includes('خاص');
+      }
+      if (job.id === 'job-online') {
+        return inc.category === 'students' || inc.studentId || inc.studentName;
+      }
+
+      // Custom jobs created by the user ONLY match their own records (inc.jobId === job.id)
       return false;
     });
     const received = jobIncomes
