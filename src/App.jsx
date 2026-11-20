@@ -1059,6 +1059,8 @@ export default function App() {
         }}
         onOpenExportModal={() => setIsExportModalOpen(true)}
         onOpenInstallModal={() => setIsInstallModalOpen(true)}
+        onTriggerInstall={handleTriggerInstall}
+        canInstallPrompt={!!deferredPrompt}
       />
 
       {/* Main Content */}

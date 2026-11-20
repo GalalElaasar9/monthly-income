@@ -36,7 +36,9 @@ export default function Navbar({
   onOpenAddModal,
   onOpenAddWithdrawal,
   onOpenExportModal,
-  onOpenInstallModal
+  onOpenInstallModal,
+  onTriggerInstall,
+  canInstallPrompt = false
 }) {
   const [yearStr, monthStr] = selectedMonth.split('-');
   const year = parseInt(yearStr, 10);
@@ -356,7 +358,7 @@ export default function Navbar({
               {isMobileMenuOpen && (
                 <div
                   ref={mobileMenuRef}
-                  className="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200 space-y-1.5"
+                  className="absolute left-0 mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-200 space-y-1.5"
                 >
                   {/* Page Navigation Tabs in Mobile */}
                   <div className="p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl flex gap-1 mb-2">
@@ -366,13 +368,13 @@ export default function Navbar({
                         setIsMobileMenuOpen(false);
                         if (onSwitchTab) onSwitchTab('incomes');
                       }}
-                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${
                         activeTab === 'incomes'
                           ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm'
                           : 'text-slate-600 dark:text-slate-400'
                       }`}
                     >
-                      <Wallet className="w-3.5 h-3.5" />
+                      <Wallet className="w-3.5 h-3.5 shrink-0" />
                       <span>الإيرادات</span>
                     </button>
 
@@ -382,16 +384,16 @@ export default function Navbar({
                         setIsMobileMenuOpen(false);
                         if (onSwitchTab) onSwitchTab('withdrawals');
                       }}
-                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${
                         activeTab === 'withdrawals'
                           ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm'
                           : 'text-slate-600 dark:text-slate-400'
                       }`}
                     >
-                      <ArrowDownRight className="w-3.5 h-3.5" />
+                      <Coins className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                       <span>المسحوبات</span>
                       {withdrawalsCount > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold shrink-0">
                           {withdrawalsCount}
                         </span>
                       )}
@@ -402,12 +404,16 @@ export default function Navbar({
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      if (onOpenInstallModal) onOpenInstallModal();
+                      if (onTriggerInstall && canInstallPrompt) {
+                        onTriggerInstall();
+                      } else if (onOpenInstallModal) {
+                        onOpenInstallModal();
+                      }
                     }}
                     className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/10 border border-emerald-500/30 text-right transition hover:bg-emerald-500/20 active:scale-[0.98] mb-1"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <div>
@@ -518,18 +524,18 @@ export default function Navbar({
                     }}
                     className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-right transition border-t border-slate-100 dark:border-slate-800/80 pt-2"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center shrink-0">
                         {cloudUser ? (cloudUser.email?.charAt(0).toUpperCase()) : (currentUser?.avatar || 'ح')}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1 text-right">
                         <span className="text-[11px] text-slate-400 block font-normal">الحساب الشخصي</span>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px] block">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate block" dir="ltr">
                           {cloudUser?.email || currentUser?.name || 'حسابي'}
                         </span>
                       </div>
                     </div>
-                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <User className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-1" />
                   </button>
 
                 </div>
