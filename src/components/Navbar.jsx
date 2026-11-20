@@ -139,16 +139,8 @@ export default function Navbar({
           {/* Desktop & Tablet Actions (Hidden on Mobile < sm) */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 shrink-0">
             
-            {/* Primary Action Button: Context-aware (Income or Withdrawal) */}
-            {activeTab === 'withdrawals' ? (
-              <button
-                onClick={onOpenAddWithdrawal}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md shadow-rose-500/20 hover:shadow-lg transition-all duration-200 transform active:scale-95 shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-                <span>تسجيل سحب</span>
-              </button>
-            ) : (
+            {/* Primary Action Button: Context-aware */}
+            {activeTab !== 'withdrawals' && (
               <button
                 onClick={onOpenAddModal}
                 className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all duration-200 transform active:scale-95 shrink-0"

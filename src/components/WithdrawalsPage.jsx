@@ -143,7 +143,7 @@ export default function WithdrawalsPage({
           <div>
             <div className="flex items-center justify-between mb-1.5 sm:mb-2.5 flex-wrap gap-1">
               <span className="text-[10px] sm:text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/40 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500 shrink-0" />
                 <span>المسحوبات</span>
               </span>
               <span className="text-[10px] sm:text-[11px] text-slate-400 font-bold">

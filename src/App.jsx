@@ -8,7 +8,7 @@ import IncomeModal from './components/IncomeModal';
 import WithdrawalModal from './components/WithdrawalModal';
 import WithdrawalsList from './components/WithdrawalsList';
 import WithdrawalsPage from './components/WithdrawalsPage';
-import { Wallet, ArrowDownRight, Plus } from 'lucide-react';
+import { Wallet, Coins, Plus } from 'lucide-react';
 import GoalModal from './components/GoalModal';
 import ExportModal from './components/ExportModal';
 import SmartInsights from './components/SmartInsights';
@@ -1098,7 +1098,7 @@ export default function App() {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <ArrowDownRight className="w-4 h-4 shrink-0" />
+              <Coins className="w-4 h-4 shrink-0" />
               <span>المسحوبات والمصروفات</span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                 activeTab === 'withdrawals'
@@ -1109,34 +1109,6 @@ export default function App() {
               </span>
             </button>
           </div>
-
-          {/* Context CTA Button */}
-          {activeTab === 'incomes' ? (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingIncome(null);
-                setInitialJobIdForModal('');
-                setIsIncomeModalOpen(true);
-              }}
-              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span>تسجيل دخل جديد</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingWithdrawal(null);
-                setIsWithdrawalModalOpen(true);
-              }}
-              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-rose-500/20 active:scale-95 transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span>تسجيل سحب جديد</span>
-            </button>
-          )}
         </div>
 
         {activeTab === 'incomes' ? (
