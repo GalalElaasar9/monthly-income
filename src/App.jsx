@@ -20,6 +20,7 @@ import FirebaseModal from './components/FirebaseModal';
 import AuthScreen from './components/AuthScreen';
 import Toast from './components/Toast';
 import ConfirmModal from './components/ConfirmModal';
+import InstallPwaModal from './components/InstallPwaModal';
 import {
   auth,
   isFirebaseConfigured,
@@ -245,6 +246,53 @@ export default function App() {
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
 
+  // PWA Install States & Events
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if app is already running in standalone PWA mode
+    if (
+      (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
+      (typeof navigator !== 'undefined' && navigator.standalone === true)
+    ) {
+      setIsAppInstalled(true);
+    }
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+      showToast('تم تثبيت تطبيق مدخولي على هاتفك بنجاح! 📱🎉', 'success');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleTriggerInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('جارٍ تثبيت التطبيق على جهازك...', 'info');
+      }
+      setDeferredPrompt(null);
+    } else {
+      setIsInstallModalOpen(true);
+    }
+  };
+
   // Lock background body scroll whenever any modal/popup is open
   const isAnyModalOpen =
     isIncomeModalOpen ||
@@ -256,7 +304,8 @@ export default function App() {
     isFirebaseModalOpen ||
     isStudentsModalOpen ||
     isStudentModalOpen ||
-    isJobModalOpen;
+    isJobModalOpen ||
+    isInstallModalOpen;
 
   useEffect(() => {
     if (isAnyModalOpen) {
@@ -990,6 +1039,7 @@ export default function App() {
           setIsWithdrawalModalOpen(true);
         }}
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
       />
 
       {/* Main Content */}
@@ -1352,9 +1402,17 @@ export default function App() {
         openConfirm={openConfirm}
       />
 
+      <InstallPwaModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        canInstallPrompt={!!deferredPrompt}
+        onTriggerInstall={handleTriggerInstall}
+        isInstalled={isAppInstalled}
+      />
+
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 py-6 text-center text-xs text-slate-500">
-        <p>تطبيق إدارة وتتبع الدخل ومصادر العمل والطلاب • React.js & Google Firebase</p>
+        <p>تطبيق إدارة وتتبع الدخل ومصادر العمل والطلاب • تطبيق ويب تقدمي (PWA) & Supabase Realtime</p>
       </footer>
 
     </div>

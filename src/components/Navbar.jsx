@@ -14,7 +14,8 @@ import {
   Layers,
   Cloud,
   RefreshCw,
-  ArrowDownRight
+  ArrowDownRight,
+  Smartphone
 } from 'lucide-react';
 import { ARABIC_MONTHS } from '../constants';
 
@@ -34,7 +35,8 @@ export default function Navbar({
   onOpenAuthModal,
   onOpenAddModal,
   onOpenAddWithdrawal,
-  onOpenExportModal
+  onOpenExportModal,
+  onOpenInstallModal
 }) {
   const [yearStr, monthStr] = selectedMonth.split('-');
   const year = parseInt(yearStr, 10);
@@ -261,6 +263,16 @@ export default function Navbar({
               )}
             </div>
 
+            {/* Install PWA App Button */}
+            <button
+              onClick={onOpenInstallModal}
+              className="flex items-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition active:scale-95 text-xs font-bold shadow-sm"
+              title="تثبيت التطبيق على الموبايل"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="hidden xl:inline">تطبيق الموبايل</span>
+            </button>
+
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
@@ -385,6 +397,32 @@ export default function Navbar({
                       )}
                     </button>
                   </div>
+
+                  {/* Install PWA Item */}
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      if (onOpenInstallModal) onOpenInstallModal();
+                    }}
+                    className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/10 border border-emerald-500/30 text-right transition hover:bg-emerald-500/20 active:scale-[0.98] mb-1"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
+                        <Smartphone className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 block">
+                          تثبيت التطبيق على الموبايل
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-normal">
+                          كـ App بشاشة كاملة وسرعة فائقة ⚡
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm shrink-0">
+                      📲 تثبيت
+                    </span>
+                  </button>
 
                   {/* Active Month Item (Opens Calendar Picker) */}
                   <button
