@@ -15,7 +15,8 @@ import {
   UserPlus,
   CheckCircle2,
   Clock,
-  Check
+  Check,
+  ChevronDown
 } from 'lucide-react';
 import { CATEGORIES, ARABIC_MONTHS, parseNumberInput } from '../constants';
 import CategoryIcon from './CategoryIcon';
@@ -230,35 +231,36 @@ export default function IncomeModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4">
           
-          {/* 1. Job Type Picker */}
+          {/* 1. Job Type Picker as a clean Select Option */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               نوع العمل / جهة الدخل <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              {jobs.map((job) => {
-                const isSelected = selectedJobId === job.id;
-                return (
-                  <button
-                    key={job.id}
-                    type="button"
-                    onClick={() => handleJobChange(job.id)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition text-right ${
-                      isSelected
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/30'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
+            <div className="relative">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                {currentJob && (
+                  <div
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+                    style={{ backgroundColor: `${currentJob.color}20`, color: currentJob.color }}
                   >
-                    <div
-                      className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${job.color}20`, color: job.color }}
-                    >
-                      <CategoryIcon name={job.icon} className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="truncate font-bold">{job.title}</span>
-                  </button>
-                );
-              })}
+                    <CategoryIcon name={currentJob.icon} className="w-3.5 h-3.5" />
+                  </div>
+                )}
+              </div>
+              <select
+                value={selectedJobId}
+                onChange={(e) => handleJobChange(e.target.value)}
+                className="w-full pr-11 pl-9 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition cursor-pointer shadow-sm appearance-none"
+              >
+                {jobs.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {job.title} {job.type === 'students' ? '(طلبة أونلاين)' : job.type === 'fixed' ? '(دخل ثابت)' : '(متغير)'}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
             </div>
           </div>
 
