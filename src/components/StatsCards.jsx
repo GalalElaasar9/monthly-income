@@ -53,13 +53,17 @@ export default function StatsCards({
         
         {/* 1. Net Remaining Balance (صافي الدخل المتبقي) */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-emerald-50/20 to-teal-50/30 dark:from-slate-900 dark:via-emerald-950/20 dark:to-teal-950/30 p-4 sm:p-6 border border-emerald-500/30 dark:border-emerald-500/30 shadow-md shadow-emerald-500/5 card-hover transition-all">
-          <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
-            <span className="text-[11px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700/60 px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-              <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>صافي الرصيد المتبقي</span>
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm">
+                <Coins className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-200 truncate">
+                صافي الرصيد المتبقي
+              </span>
+            </div>
 
-            <span className="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0 whitespace-nowrap">
               متبقي {retentionPercent}%
             </span>
           </div>
@@ -88,15 +92,19 @@ export default function StatsCards({
 
         {/* 2. Total Withdrawals & Expenses (إجمالي المسحوبات والمصروفات) */}
         <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 p-4 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm card-hover hover:border-rose-500/40 hover:shadow-xl hover:shadow-rose-500/5 transition-all">
-          <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
-            <span className="text-[11px] sm:text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
-              <ArrowDownRight className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-              <span>إجمالي المسحوبات</span>
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 shadow-sm">
+                <ArrowDownRight className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-rose-900 dark:text-rose-200 truncate">
+                إجمالي المسحوبات
+              </span>
+            </div>
 
             <button
               onClick={onOpenWithdrawalModal}
-              className="flex items-center gap-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-md shadow-rose-500/20 transition active:scale-95"
+              className="flex items-center gap-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl shadow-md shadow-rose-500/20 transition active:scale-95 shrink-0 whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>تسجيل سحب</span>
