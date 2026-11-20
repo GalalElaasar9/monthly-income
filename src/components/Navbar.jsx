@@ -15,7 +15,8 @@ import {
   Cloud,
   RefreshCw,
   ArrowDownRight,
-  Smartphone
+  Smartphone,
+  Coins
 } from 'lucide-react';
 import { ARABIC_MONTHS } from '../constants';
 
