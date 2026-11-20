@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -10,7 +10,9 @@ import {
   Tag,
   Briefcase,
   Calendar,
-  Users
+  Users,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { CATEGORIES } from '../constants';
 import CategoryIcon from './CategoryIcon';
@@ -60,6 +62,20 @@ export default function IncomeTable({
   }, [incomes, searchQuery, selectedJobFilter, statusFilter, sortBy]);
 
   const filteredTotal = filteredIncomes.reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Pagination: 8 items per page
+  const ITEMS_PER_PAGE = 8;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedJobFilter, statusFilter, sortBy]);
+
+  const totalPages = Math.ceil(filteredIncomes.length / ITEMS_PER_PAGE);
+  const validCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedIncomes = filteredIncomes.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden mb-12 transition-all">
@@ -172,21 +188,21 @@ export default function IncomeTable({
           </button>
         </div>
       ) : (
-        /* Table View (100% Width with Smooth Horizontal Overflow Scroll) */
-        <div className="w-full overflow-x-auto scrollbar-thin">
+        /* Table View (100% Width with Smooth Horizontal Overflow Scroll & Sticky Header) */
+        <div className="w-full overflow-x-auto scrollbar-thin max-h-[620px] overflow-y-auto">
           <table className="w-full text-right border-collapse min-w-[680px]">
-            <thead>
-              <tr className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
-                <th className="py-3.5 px-4 sm:px-6">مصدر الدخل / الوصف</th>
-                <th className="py-3.5 px-4">جهة العمل</th>
-                <th className="py-3.5 px-4">التاريخ</th>
-                <th className="py-3.5 px-4">المبلغ</th>
-                <th className="py-3.5 px-4 text-center">الحالة</th>
-                <th className="py-3.5 px-4 text-center">الإجراءات</th>
+            <thead className="sticky top-0 z-20 shadow-sm border-b border-slate-200 dark:border-slate-700/80">
+              <tr className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                <th className="py-3.5 px-4 sm:px-6 bg-slate-100 dark:bg-slate-800">مصدر الدخل / الوصف</th>
+                <th className="py-3.5 px-4 bg-slate-100 dark:bg-slate-800">جهة العمل</th>
+                <th className="py-3.5 px-4 bg-slate-100 dark:bg-slate-800">التاريخ</th>
+                <th className="py-3.5 px-4 bg-slate-100 dark:bg-slate-800">المبلغ</th>
+                <th className="py-3.5 px-4 text-center bg-slate-100 dark:bg-slate-800">الحالة</th>
+                <th className="py-3.5 px-4 text-center bg-slate-100 dark:bg-slate-800">الإجراءات</th>
               </tr>
             </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
-                {filteredIncomes.map((item) => {
+                {paginatedIncomes.map((item) => {
                   const matchedJob =
                     jobs.find((j) => j.id === item.jobId) ||
                     jobs.find((j) => j.category === item.category) ||
@@ -339,6 +355,51 @@ export default function IncomeTable({
               </tbody>
             </table>
           </div>
+      )}
+
+      {/* Pagination Bar (when filteredIncomes.length > 8) */}
+      {totalPages > 1 && (
+        <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="text-slate-500 dark:text-slate-400 font-medium">
+            عرض <span className="font-bold text-slate-800 dark:text-slate-200">{startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, filteredIncomes.length)}</span> من أصل <span className="font-bold text-slate-800 dark:text-slate-200">{filteredIncomes.length}</span> بند دخْل
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={validCurrentPage === 1}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1 font-bold shadow-sm active:scale-95"
+            >
+              <ChevronRight className="w-4 h-4" />
+              <span>السابق</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl text-xs font-bold transition flex items-center justify-center ${
+                    validCurrentPage === pageNum
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-500/30'
+                      : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/80 shadow-sm'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={validCurrentPage === totalPages}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1 font-bold shadow-sm active:scale-95"
+            >
+              <span>التالي</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Footer Bar */}
