@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Briefcase,
   Building2,
@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-  Edit2
+  Edit2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import CategoryIcon from './CategoryIcon';
 
@@ -78,16 +80,29 @@ export default function JobsSummaryCards({
     };
   });
 
+  // Pagination: 4 items per page
+  const ITEMS_PER_PAGE = 4;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(jobStats.length / ITEMS_PER_PAGE);
+  const validCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const visibleJobs = jobStats.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div className="mb-8">
       {/* Header with responsive wrapping */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
             <span>توزيع الدخل حسب نوع الشغل والجهات</span>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
               {jobs.length} جهات
             </span>
+            {totalPages > 1 && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                صفحة {validCurrentPage} من {totalPages}
+              </span>
+            )}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             مجموع ما حققته من كل شغل (الشركة، السنتر، الطلبة أونلاين، الشغل الخاص)
@@ -95,6 +110,27 @@ export default function JobsSummaryCards({
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1 sm:hidden">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={validCurrentPage === 1}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition active:scale-95"
+                title="السابق"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={validCurrentPage === totalPages}
+                className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-xs transition active:scale-95"
+                title="التالي"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <button
             onClick={onOpenStudentsModal}
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/80 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 text-xs font-bold transition active:scale-95"
@@ -115,7 +151,7 @@ export default function JobsSummaryCards({
 
       {/* Grid of Job Cards: 1 col on mobile, 2 cols on tablet, 4 cols on desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        {jobStats.map((job) => {
+        {visibleJobs.map((job) => {
           const isStudentsJob = job.type === 'students';
           const studentCompletionRate = students.length > 0 && isStudentsJob
             ? Math.round((job.paidStudentCount / students.length) * 100)
@@ -249,6 +285,51 @@ export default function JobsSummaryCards({
           );
         })}
       </div>
+
+      {/* Pagination Controls when total jobs > 4 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-5 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex-wrap gap-3">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            عرض <span className="font-bold text-slate-700 dark:text-slate-200">{startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, jobStats.length)}</span> من إجمالي <span className="font-bold text-slate-700 dark:text-slate-200">{jobStats.length}</span> جهات عمل
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={validCurrentPage === 1}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700/80 transition flex items-center gap-1 active:scale-95 shadow-sm"
+            >
+              <ChevronRight className="w-4 h-4" />
+              <span>السابق</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-xl text-xs font-bold transition flex items-center justify-center ${
+                    validCurrentPage === pageNum
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-500/30'
+                      : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/80 shadow-sm'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={validCurrentPage === totalPages}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700/80 transition flex items-center gap-1 active:scale-95 shadow-sm"
+            >
+              <span>التالي</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
