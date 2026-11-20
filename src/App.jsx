@@ -954,12 +954,26 @@ export default function App() {
 
   // Logout Handler
   const handleLogout = () => {
+    setIsAuthModalOpen(false);
+    setIsFirebaseModalOpen(false);
+
     openConfirm({
       title: 'تسجيل الخروج',
       message: 'هل تريد تسجيل الخروج؟ ستتم إعادتك لشاشة تسجيل الدخول.',
       confirmText: 'تسجيل خروج',
       isDanger: false,
       onConfirm: async () => {
+        setIsAuthModalOpen(false);
+        setIsFirebaseModalOpen(false);
+        setIsIncomeModalOpen(false);
+        setIsWithdrawalModalOpen(false);
+        setIsGoalModalOpen(false);
+        setIsExportModalOpen(false);
+        setIsStudentsModalOpen(false);
+        setIsStudentModalOpen(false);
+        setIsJobModalOpen(false);
+        setIsInstallModalOpen(false);
+
         if (auth) {
           try {
             await signOut(auth);
@@ -967,6 +981,9 @@ export default function App() {
         }
         setCloudUser(null);
         setCurrentUser(null);
+        try {
+          localStorage.removeItem('monthly_income_user');
+        } catch (e) {}
         showToast('تم تسجيل الخروج بنجاح', 'info');
       }
     });
@@ -981,6 +998,8 @@ export default function App() {
         <Toast toast={toast} onClose={() => setToast(null)} />
         <AuthScreen
           onLoginSuccess={(user) => {
+            setIsAuthModalOpen(false);
+            setIsFirebaseModalOpen(false);
             setCurrentUser(user);
           }}
           darkMode={darkMode}

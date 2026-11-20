@@ -240,7 +240,10 @@ export default function AuthModal({
         <div className="pt-2 flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={onLogout}
+            onClick={() => {
+              if (onClose) onClose();
+              if (onLogout) onLogout();
+            }}
             className="flex-1 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition"
           >
             تسجيل الخروج
