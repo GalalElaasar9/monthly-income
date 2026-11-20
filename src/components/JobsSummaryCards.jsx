@@ -94,18 +94,18 @@ export default function JobsSummaryCards({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onOpenStudentsModal}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/80 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 text-xs font-semibold transition"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/80 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100 text-xs font-bold transition active:scale-95"
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>إدارة وتتبع الطلاب ({students.length})</span>
+            <Users className="w-3.5 h-3.5 shrink-0" />
+            <span>متابعة الطلاب ({students.length})</span>
           </button>
           
           <button
             onClick={onOpenAddJob}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 transition"
+            className="flex-none sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 sm:py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 transition active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>إضافة جهة</span>

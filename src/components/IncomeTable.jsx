@@ -69,13 +69,13 @@ export default function IncomeTable({
         
         {/* Search Input */}
         <div className="relative flex-1 max-w-full lg:max-w-md">
-          <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
             placeholder="ابحث بالاسم، الطالب، جهة العمل، الملاحظات..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-4 pr-10 py-2 sm:py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            className="w-full pl-4 pr-10 py-2.5 sm:py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-emerald-500 transition"
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function IncomeTable({
             <select
               value={selectedJobFilter}
               onChange={(e) => setSelectedJobFilter(e.target.value)}
-              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium rounded-xl px-2.5 sm:px-3 py-2 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium rounded-xl px-2.5 sm:px-3 py-2 sm:py-2 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               <option value="all">جميع جهات العمل</option>
               {jobs.map((job) => (
@@ -101,7 +101,7 @@ export default function IncomeTable({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium rounded-xl px-2 sm:px-2.5 py-2 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+              className="w-full sm:w-auto bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-medium rounded-xl px-2 sm:px-2.5 py-2 sm:py-2 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               <option value="date-desc">الأحدث أولاً</option>
               <option value="date-asc">الأقدم أولاً</option>
@@ -111,10 +111,10 @@ export default function IncomeTable({
           </div>
 
           {/* Status Tabs */}
-          <div className="flex items-center justify-between sm:justify-start bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs font-medium">
+          <div className="grid grid-cols-3 sm:flex sm:items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs font-medium w-full sm:w-auto">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition text-center ${
+              className={`py-1.5 px-2 sm:px-3 rounded-lg transition text-center ${
                 statusFilter === 'all'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -124,25 +124,25 @@ export default function IncomeTable({
             </button>
             <button
               onClick={() => setStatusFilter('received')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1 text-center ${
+              className={`py-1.5 px-2 sm:px-3 rounded-lg transition flex items-center justify-center gap-1 text-center ${
                 statusFilter === 'received'
                   ? 'bg-emerald-500 text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-emerald-500'
               }`}
             >
               <CheckCircle2 className="w-3 h-3" />
-              مستلم
+              <span>مستلم</span>
             </button>
             <button
               onClick={() => setStatusFilter('pending')}
-              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1 text-center ${
+              className={`py-1.5 px-2 sm:px-3 rounded-lg transition flex items-center justify-center gap-1 text-center ${
                 statusFilter === 'pending'
                   ? 'bg-amber-500 text-white shadow-sm font-bold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-amber-500'
               }`}
             >
               <Clock className="w-3 h-3" />
-              معلق
+              <span>معلق</span>
             </button>
           </div>
 
@@ -172,132 +172,109 @@ export default function IncomeTable({
           </button>
         </div>
       ) : (
-        /* Unified Table with Horizontal Scroll */
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-right border-collapse min-w-[700px]">
-            <thead>
-              <tr className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
-                <th className="py-3.5 px-4 sm:px-6">مصدر الدخل / الوصف</th>
-                <th className="py-3.5 px-4">جهة العمل</th>
-                <th className="py-3.5 px-4">التاريخ</th>
-                <th className="py-3.5 px-4">المبلغ</th>
-                <th className="py-3.5 px-4 text-center">الحالة</th>
-                <th className="py-3.5 px-4 text-center">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
-              {filteredIncomes.map((item) => {
-                const matchedJob =
-                  jobs.find((j) => j.id === item.jobId) ||
-                  jobs.find((j) => j.category === item.category) ||
-                  (item.title?.includes('سنتر') || item.client?.includes('سنتر') ? jobs.find((j) => j.id === 'job-center') : null) ||
-                  (item.title?.includes('فريلانس') || item.title?.includes('خاص') ? jobs.find((j) => j.id === 'job-private') : null);
-                const categoryMeta = CATEGORIES.find((c) => c.id === item.category) || {
-                  name: item.category,
-                  color: matchedJob?.color || '#10b981',
-                  icon: matchedJob?.icon || 'Briefcase'
-                };
-                const isReceived = item.status === 'received';
+        <>
+          {/* 1. Mobile Cards View (< sm) */}
+          <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-800/80">
+            {filteredIncomes.map((item) => {
+              const matchedJob =
+                jobs.find((j) => j.id === item.jobId) ||
+                jobs.find((j) => j.category === item.category) ||
+                (item.title?.includes('سنتر') || item.client?.includes('سنتر') ? jobs.find((j) => j.id === 'job-center') : null) ||
+                (item.title?.includes('فريلانس') || item.title?.includes('خاص') ? jobs.find((j) => j.id === 'job-private') : null);
+              const categoryMeta = CATEGORIES.find((c) => c.id === item.category) || {
+                name: item.category,
+                color: matchedJob?.color || '#10b981',
+                icon: matchedJob?.icon || 'Briefcase'
+              };
+              const isReceived = item.status === 'received';
 
-                return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition group"
-                  >
-                    {/* Title & Details */}
-                    <td className="py-4 px-4 sm:px-6">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
-                          style={{
-                            backgroundColor: `${matchedJob?.color || categoryMeta.color}18`,
-                            color: matchedJob?.color || categoryMeta.color
-                          }}
-                        >
-                          <CategoryIcon name={matchedJob?.icon || categoryMeta.icon} className="w-5 h-5" />
+              return (
+                <div key={item.id} className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                  {/* Top: Icon + Title + Job Tag */}
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
+                        style={{
+                          backgroundColor: `${matchedJob?.color || categoryMeta.color}18`,
+                          color: matchedJob?.color || categoryMeta.color
+                        }}
+                      >
+                        <CategoryIcon name={matchedJob?.icon || categoryMeta.icon} className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                            {item.title}
+                          </h4>
+                          {item.isRecurring && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                              <Repeat className="w-2.5 h-2.5" />
+                              دوري
+                            </span>
+                          )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-slate-900 dark:text-white">
-                              {item.title}
-                            </h4>
-                            {item.isRecurring && (
-                              <span
-                                title="دخل دوري متكرر كل شهر"
-                                className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                              >
-                                <Repeat className="w-2.5 h-2.5" />
-                                دوري
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            {item.studentName ? (
-                              <span className="font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
-                                🎓 الطالب: {item.studentName}
-                              </span>
-                            ) : item.client ? (
-                              <span className="font-medium text-slate-600 dark:text-slate-300">
-                                🏢 {item.client}
-                              </span>
-                            ) : null}
 
-                            {item.notes && (
-                              <span className="truncate max-w-xs text-slate-400 dark:text-slate-500">
-                                • {item.notes}
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                          {item.studentName ? (
+                            <span className="font-semibold text-purple-600 dark:text-purple-400">
+                              🎓 {item.studentName}
+                            </span>
+                          ) : item.client ? (
+                            <span className="font-medium text-slate-600 dark:text-slate-300">
+                              🏢 {item.client}
+                            </span>
+                          ) : null}
+                          <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            {item.date}
+                          </span>
                         </div>
                       </div>
-                    </td>
+                    </div>
 
                     {/* Job Stream Badge */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      {matchedJob ? (
-                        <span
-                          className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
-                          style={{
-                            backgroundColor: `${matchedJob.color}15`,
-                            color: matchedJob.color,
-                            border: `1px solid ${matchedJob.color}30`
-                          }}
-                        >
-                          <CategoryIcon name={matchedJob.icon} className="w-3.5 h-3.5" />
-                          <span>{matchedJob.title}</span>
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400">عام</span>
-                      )}
-                    </td>
+                    {matchedJob && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0"
+                        style={{
+                          backgroundColor: `${matchedJob.color}15`,
+                          color: matchedJob.color,
+                          border: `1px solid ${matchedJob.color}30`
+                        }}
+                      >
+                        <span>{matchedJob.title}</span>
+                      </span>
+                    )}
+                  </div>
 
-                    {/* Date */}
-                    <td className="py-4 px-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium">
-                      {item.date}
-                    </td>
+                  {/* Notes if present */}
+                  {item.notes && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
+                      {item.notes}
+                    </p>
+                  )}
 
+                  {/* Bottom Bar: Amount + Status Toggle + Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/60">
                     {/* Amount */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="flex items-baseline gap-1 font-bold">
-                        <span className="text-base text-slate-900 dark:text-white">
-                          {item.amount.toLocaleString('ar-EG')}
-                        </span>
-                        <span className="text-xs text-slate-400 font-normal">
-                          {currency.symbol}
-                        </span>
-                      </div>
-                    </td>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-black text-slate-900 dark:text-white">
+                        {item.amount.toLocaleString('ar-EG')}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        {currency.symbol}
+                      </span>
+                    </div>
 
-                    {/* Status Toggle Button */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                    {/* Status & Actions */}
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => onToggleStatus(item.id)}
-                        title="انقر لتغيير حالة الاستلام"
-                        className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition active:scale-95 border ${
+                        className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold transition active:scale-95 border ${
                           isReceived
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
-                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
                         }`}
                       >
                         {isReceived ? (
@@ -312,33 +289,196 @@ export default function IncomeTable({
                           </>
                         )}
                       </button>
-                    </td>
 
-                    {/* Actions */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        onClick={() => onEditIncome(item)}
+                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition"
+                        title="تعديل"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteIncome(item.id)}
+                        className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 transition"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. Desktop Table View (>= sm) */}
+          <div className="hidden sm:block overflow-x-auto w-full">
+            <table className="w-full text-right border-collapse min-w-[700px]">
+              <thead>
+                <tr className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <th className="py-3.5 px-4 sm:px-6">مصدر الدخل / الوصف</th>
+                  <th className="py-3.5 px-4">جهة العمل</th>
+                  <th className="py-3.5 px-4">التاريخ</th>
+                  <th className="py-3.5 px-4">المبلغ</th>
+                  <th className="py-3.5 px-4 text-center">الحالة</th>
+                  <th className="py-3.5 px-4 text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                {filteredIncomes.map((item) => {
+                  const matchedJob =
+                    jobs.find((j) => j.id === item.jobId) ||
+                    jobs.find((j) => j.category === item.category) ||
+                    (item.title?.includes('سنتر') || item.client?.includes('سنتر') ? jobs.find((j) => j.id === 'job-center') : null) ||
+                    (item.title?.includes('فريلانس') || item.title?.includes('خاص') ? jobs.find((j) => j.id === 'job-private') : null);
+                  const categoryMeta = CATEGORIES.find((c) => c.id === item.category) || {
+                    name: item.category,
+                    color: matchedJob?.color || '#10b981',
+                    icon: matchedJob?.icon || 'Briefcase'
+                  };
+                  const isReceived = item.status === 'received';
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition group"
+                    >
+                      {/* Title & Details */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
+                            style={{
+                              backgroundColor: `${matchedJob?.color || categoryMeta.color}18`,
+                              color: matchedJob?.color || categoryMeta.color
+                            }}
+                          >
+                            <CategoryIcon name={matchedJob?.icon || categoryMeta.icon} className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-slate-900 dark:text-white">
+                                {item.title}
+                              </h4>
+                              {item.isRecurring && (
+                                <span
+                                  title="دخل دوري متكرر كل شهر"
+                                  className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                                >
+                                  <Repeat className="w-2.5 h-2.5" />
+                                  دوري
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                              {item.studentName ? (
+                                <span className="font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                                  🎓 الطالب: {item.studentName}
+                                </span>
+                              ) : item.client ? (
+                                <span className="font-medium text-slate-600 dark:text-slate-300">
+                                  🏢 {item.client}
+                                </span>
+                              ) : null}
+
+                              {item.notes && (
+                                <span className="truncate max-w-xs text-slate-400 dark:text-slate-500">
+                                  • {item.notes}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Job Stream Badge */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        {matchedJob ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
+                            style={{
+                              backgroundColor: `${matchedJob.color}15`,
+                              color: matchedJob.color,
+                              border: `1px solid ${matchedJob.color}30`
+                            }}
+                          >
+                            <CategoryIcon name={matchedJob.icon} className="w-3.5 h-3.5" />
+                            <span>{matchedJob.title}</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">عام</span>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-4 px-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium">
+                        {item.date}
+                      </td>
+
+                      {/* Amount */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-baseline gap-1 font-bold">
+                          <span className="text-base text-slate-900 dark:text-white">
+                            {item.amount.toLocaleString('ar-EG')}
+                          </span>
+                          <span className="text-xs text-slate-400 font-normal">
+                            {currency.symbol}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status Toggle Button */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
                         <button
-                          onClick={() => onEditIncome(item)}
-                          title="تعديل هذا الدخل"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition"
+                          onClick={() => onToggleStatus(item.id)}
+                          title="انقر لتغيير حالة الاستلام"
+                          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold transition active:scale-95 border ${
+                            isReceived
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                              : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                          }`}
                         >
-                          <Edit className="w-4 h-4" />
+                          {isReceived ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                              <span>مُستلم</span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                              <span>معلق</span>
+                            </>
+                          )}
                         </button>
-                        <button
-                          onClick={() => onDeleteIncome(item.id)}
-                          title="حذف هذا الدخل"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onEditIncome(item)}
+                            title="تعديل هذا الدخل"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800 transition"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDeleteIncome(item.id)}
+                            title="حذف هذا الدخل"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Footer Bar */}

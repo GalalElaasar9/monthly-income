@@ -351,67 +351,68 @@ export default function StudentsManagerModal({
         )}
       </div>
 
-      {/* Controls: Search & Status Tabs & Add button */}
-      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="ابحث باسم الطالب أو الهاتف..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-purple-500 transition"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-medium">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                filter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500'
-              }`}
-            >
-              الكل
-            </button>
-            <button
-              onClick={() => setFilter('paid')}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                filter === 'paid' ? 'bg-emerald-500 text-white shadow-sm font-bold' : 'text-slate-500'
-              }`}
-            >
-              سددوا ({paidCount})
-            </button>
-            <button
-              onClick={() => setFilter('unpaid')}
-              className={`px-2.5 py-1 rounded-lg transition ${
-                filter === 'unpaid' ? 'bg-amber-500 text-white shadow-sm font-bold' : 'text-slate-500'
-              }`}
-            >
-              لم يسددوا ({unpaidCount})
-            </button>
-            {overdueCount > 0 && (
-              <button
-                onClick={() => setFilter('overdue')}
-                className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
-                  filter === 'overdue'
-                    ? 'bg-rose-600 text-white shadow-sm font-bold'
-                    : 'text-rose-600 dark:text-rose-400 font-bold hover:bg-rose-50'
-                }`}
-                title="الطلاب الذين لم يسددوا واقتربت نهاية الشهر (أقل من 5 أيام)"
-              >
-                <span>⚠️ إنذار ({overdueCount})</span>
-              </button>
-            )}
+      {/* Controls: Search & Add button & Status Tabs */}
+      <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="ابحث باسم الطالب أو الهاتف..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-purple-500 transition"
+            />
           </div>
 
           <button
             onClick={onOpenAddStudent}
-            className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0"
+            className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm shrink-0 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>طالب جديد</span>
           </button>
+        </div>
+
+        {/* Filter Tabs - Full width and touch friendly */}
+        <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-medium w-full overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setFilter('all')}
+            className={`flex-1 min-w-[50px] py-1.5 px-2 rounded-lg transition text-center whitespace-nowrap ${
+              filter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold' : 'text-slate-500'
+            }`}
+          >
+            الكل
+          </button>
+          <button
+            onClick={() => setFilter('paid')}
+            className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg transition text-center whitespace-nowrap ${
+              filter === 'paid' ? 'bg-emerald-500 text-white shadow-sm font-bold' : 'text-slate-500'
+            }`}
+          >
+            سددوا ({paidCount})
+          </button>
+          <button
+            onClick={() => setFilter('unpaid')}
+            className={`flex-1 min-w-[75px] py-1.5 px-2 rounded-lg transition text-center whitespace-nowrap ${
+              filter === 'unpaid' ? 'bg-amber-500 text-white shadow-sm font-bold' : 'text-slate-500'
+            }`}
+          >
+            لم يسددوا ({unpaidCount})
+          </button>
+          {overdueCount > 0 && (
+            <button
+              onClick={() => setFilter('overdue')}
+              className={`flex-1 min-w-[80px] py-1.5 px-2 rounded-lg transition flex items-center justify-center gap-1 whitespace-nowrap ${
+                filter === 'overdue'
+                  ? 'bg-rose-600 text-white shadow-sm font-bold'
+                  : 'text-rose-600 dark:text-rose-400 font-bold hover:bg-rose-50'
+              }`}
+              title="الطلاب الذين لم يسددوا واقتربت نهاية الشهر (أقل من 5 أيام)"
+            >
+              <span>⚠️ إنذار ({overdueCount})</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -1047,17 +1047,17 @@ export default function App() {
         
         {/* Top Page Navigation Tabs */}
         <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-          <div className="inline-flex p-1.5 bg-slate-200/70 dark:bg-slate-900/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner">
+          <div className="flex w-full sm:w-auto p-1.5 bg-slate-200/70 dark:bg-slate-900/90 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner">
             <button
               type="button"
               onClick={() => handleSwitchTab('incomes')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                 activeTab === 'incomes'
                   ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-md shadow-slate-900/5 ring-1 ring-slate-900/5'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Wallet className="w-4 h-4" />
+              <Wallet className="w-4 h-4 shrink-0" />
               <span>الإيرادات والدخل</span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                 activeTab === 'incomes'
@@ -1071,13 +1071,13 @@ export default function App() {
             <button
               type="button"
               onClick={() => handleSwitchTab('withdrawals')}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
                 activeTab === 'withdrawals'
                   ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-md shadow-slate-900/5 ring-1 ring-slate-900/5'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <ArrowDownRight className="w-4 h-4" />
+              <ArrowDownRight className="w-4 h-4 shrink-0" />
               <span>المسحوبات والمصروفات</span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                 activeTab === 'withdrawals'

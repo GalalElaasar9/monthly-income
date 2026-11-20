@@ -96,142 +96,150 @@ export default function WithdrawalsPage({
     <div className="space-y-6 sm:space-y-8 animate-fade-in pb-12">
       
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-rose-500/20 shrink-0">
-            <ArrowDownRight className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-rose-500/20 shrink-0">
+            <ArrowDownRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                إدارة المسحوبات والمصروفات الشخصية
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white">
+                إدارة المسحوبات والمصروفات
               </h2>
-              <span className="text-xs px-3 py-1 rounded-full font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300">
+              <span className="text-[10px] sm:text-xs px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300">
                 شهر {currentMonthName}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1">
               صفحة مخصصة ومستقلة لتسجيل وتتبع كافة مبالغ السحب ومصروفاتك وحساب الصافي بدقة
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onSwitchToIncomes}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition active:scale-95"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition active:scale-95"
           >
-            <span>صفحة الإيرادات والدخل</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+            <span>الإيرادات والدخل</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
           </button>
 
           <button
             onClick={onOpenAddWithdrawal}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-500/25 transition active:scale-95 shrink-0"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold text-xs sm:text-sm shadow-md shadow-rose-500/25 transition active:scale-95 shrink-0"
           >
-            <Plus className="w-4 h-4" />
-            <span>تسجيل سحب جديد</span>
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>تسجيل سحب</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Stats Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+      {/* KPI Stats Summary Cards: 2x2 on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5">
         
         {/* Card 1: Total Withdrawn */}
-        <div className="rounded-3xl bg-white dark:bg-slate-900 p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-rose-500/30 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-              <ArrowDownRight className="w-3.5 h-3.5" />
-              <span>إجمالي المسحوبات</span>
-            </span>
-            <span className="text-[11px] text-slate-400 font-bold">
-              {withdrawnPercent}% من المحصل
-            </span>
+        <div className="rounded-3xl bg-white dark:bg-slate-900 p-3.5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-rose-500/30 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2.5 flex-wrap gap-1">
+              <span className="text-[10px] sm:text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/40 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>المسحوبات</span>
+              </span>
+              <span className="text-[10px] sm:text-[11px] text-slate-400 font-bold">
+                {withdrawnPercent}%
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-1 sm:gap-2 mt-1 sm:mt-2">
+              <span className="text-lg sm:text-3xl font-black text-rose-600 dark:text-rose-400">
+                {totalWithdrawn.toLocaleString('ar-EG')}
+              </span>
+              <span className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                {currency.symbol}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
-              {totalWithdrawn.toLocaleString('ar-EG')}
-            </span>
-            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
-              {currency.symbol}
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-400 mt-2">
-            المبالغ التي تم سحبها خلال هذا الشهر
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5 sm:mt-2 truncate">
+            المبالغ المسحوبة
           </p>
         </div>
 
         {/* Card 2: Net Remaining */}
-        <div className="rounded-3xl bg-white dark:bg-slate-900 p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-emerald-500/30 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-emerald-500" />
-              <span>صافي الرصيد المتبقي</span>
-            </span>
+        <div className="rounded-3xl bg-white dark:bg-slate-900 p-3.5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-emerald-500/30 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2.5">
+              <span className="text-[10px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/40 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
+                <span>الصافي المتبقي</span>
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-1 sm:gap-2 mt-1 sm:mt-2">
+              <span className={`text-lg sm:text-3xl font-black ${
+                netRemaining < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
+              }`}>
+                {netRemaining.toLocaleString('ar-EG')}
+              </span>
+              <span className="text-[10px] sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {currency.symbol}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className={`text-2xl sm:text-3xl font-black ${
-              netRemaining < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'
-            }`}>
-              {netRemaining.toLocaleString('ar-EG')}
-            </span>
-            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-              {currency.symbol}
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-400 mt-2">
-            المتبقي من الدخل المحصل ({receivedTotal.toLocaleString('ar-EG')} {currency.symbol})
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5 sm:mt-2 truncate">
+            المتبقي من المحصل
           </p>
         </div>
 
         {/* Card 3: Operations Count & Average */}
-        <div className="rounded-3xl bg-white dark:bg-slate-900 p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-              <Receipt className="w-3.5 h-3.5 text-slate-500" />
-              <span>عدد عمليات السحب</span>
-            </span>
+        <div className="rounded-3xl bg-white dark:bg-slate-900 p-3.5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2.5">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500" />
+                <span>العمليات</span>
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-1 sm:gap-2 mt-1 sm:mt-2">
+              <span className="text-lg sm:text-3xl font-black text-slate-900 dark:text-white">
+                {withdrawals.length}
+              </span>
+              <span className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                عملية
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              {withdrawals.length}
-            </span>
-            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
-              عملية
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-400 mt-2">
-            {withdrawals.length > 0 ? `متوسط ${averageWithdrawal.toLocaleString('ar-EG')} ${currency.symbol} لكل عملية` : 'لا توجد عمليات مسجلة'}
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5 sm:mt-2 truncate">
+            {withdrawals.length > 0 ? `متوسط ${averageWithdrawal.toLocaleString('ar-EG')} ${currency.symbol}` : 'لا توجد عمليات'}
           </p>
         </div>
 
         {/* Card 4: Highest Withdrawal */}
-        <div className="rounded-3xl bg-white dark:bg-slate-900 p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>أكبر عملية سحب</span>
-            </span>
+        <div className="rounded-3xl bg-white dark:bg-slate-900 p-3.5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2.5">
+              <span className="text-[10px] sm:text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/40 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
+                <span>أكبر سحب</span>
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-1 sm:gap-2 mt-1 sm:mt-2">
+              <span className="text-lg sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+                {highestWithdrawal ? parseFloat(highestWithdrawal.amount).toLocaleString('ar-EG') : '0'}
+              </span>
+              <span className="text-[10px] sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                {currency.symbol}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
-              {highestWithdrawal ? parseFloat(highestWithdrawal.amount).toLocaleString('ar-EG') : '0'}
-            </span>
-            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
-              {currency.symbol}
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-400 mt-2 truncate">
-            {highestWithdrawal ? `${highestWithdrawal.reason} (${highestWithdrawal.date})` : 'لا توجد مسحوبات'}
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5 sm:mt-2 truncate">
+            {highestWithdrawal ? `${highestWithdrawal.reason}` : 'لا توجد مسحوبات'}
           </p>
         </div>
 
@@ -274,10 +282,10 @@ export default function WithdrawalsPage({
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
         
         {/* Controls Bar: Search & Sort */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           
           {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -289,14 +297,14 @@ export default function WithdrawalsPage({
           </div>
 
           {/* Sort Selector */}
-          <div className="flex items-center gap-2 self-end md:self-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:inline">
               الترتيب:
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
+              className="w-full sm:w-auto px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
             >
               <option value="date-desc">الأحدث تاريخاً أولاً</option>
               <option value="date-asc">الأقدم تاريخاً أولاً</option>
